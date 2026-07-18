@@ -2,4 +2,4 @@
 2:I[39756,["/athar-accounts/_next/static/chunks/0dbhjjzl8qfwv.js"],"default"]
 3:I[37457,["/athar-accounts/_next/static/chunks/0dbhjjzl8qfwv.js"],"default"]
 4:[]
-0:{"rsc":["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","template":["$","$L3",null,{}]}]]}],"isPartial":false,"staleTime":300,"varyParams":"$W4","buildId":"ll_yB3o2fcuKGogF_aQhd"}
+0:{"rsc":["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","template":["$","$L3",null,{}]}]]}],"isPartial":false,"staleTime":300,"varyParams":"$W4","buildId":"2dFsHtyJecCi2vEYwmA5C"}
