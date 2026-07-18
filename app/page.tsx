@@ -938,7 +938,7 @@ export default function Home() {
                   )}
                 </div>
 
-                <div className="report-summary print-keep">
+                <div className="report-summary">
                   <span>
                     إجمالي المودَع <b>{money(report.result.summary.totalDeposited)}</b>
                   </span>
