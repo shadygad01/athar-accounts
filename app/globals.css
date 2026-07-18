@@ -42,6 +42,8 @@
 .supplier-ledger th.balance-col,.supplier-ledger td.balance-col{width:135px;padding-left:8px;padding-right:8px}
 .supplier-ledger th.expense-col,.supplier-ledger td.expense-col{width:98px;padding-left:6px;padding-right:6px;white-space:nowrap}
 .supplier-ledger th.label-col,.supplier-ledger td.label-col{width:260px}
+.supplier-ledger th,.supplier-ledger td{border-left:1px solid var(--line)}
+.supplier-ledger th:last-child,.supplier-ledger td:last-child{border-left:none}
 .supplier-ledger tbody tr.row-deposit td{background:#f2f9f6}
 
 /* وضع مضغوط مؤقت يُفعَّل فقط أثناء التقاط صورة الحساب: يقلل الحشو والفراغات فقط، دون تغيير الخط أو حجمه أو تنسيقه */
