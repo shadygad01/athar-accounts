@@ -120,6 +120,7 @@ export default function Home() {
     event: ReactPointerEvent<HTMLSpanElement>,
     note: StickyNote,
   ) => {
+    if (!event.isPrimary || event.button !== 0) return;
     const noteElement = event.currentTarget.closest(
       ".sticky-note",
     ) as HTMLElement | null;
@@ -137,6 +138,13 @@ export default function Home() {
   const moveDraggingNote = (event: ReactPointerEvent<HTMLSpanElement>) => {
     const drag = draggingNote.current;
     if (!drag) return;
+    if ((event.buttons & 1) === 0) {
+      draggingNote.current = null;
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      }
+      return;
+    }
     const noteWidth = Math.min(270, window.innerWidth - 24);
     const noteHeight = 190;
     const x = Math.min(
