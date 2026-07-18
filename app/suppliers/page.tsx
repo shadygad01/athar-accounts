@@ -851,7 +851,9 @@ function SupplierStatement({
                 <th rowSpan={2} className="balance-col">
                   رصيد
                 </th>
-                <th colSpan={2}>وارد</th>
+                <th colSpan={2} className="wared-col">
+                  وارد
+                </th>
                 <th rowSpan={2} className="expense-col">
                   مصروف
                 </th>
