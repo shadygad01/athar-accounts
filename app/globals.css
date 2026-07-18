@@ -34,15 +34,26 @@
 .badge.sar{background:#f5eedf;color:#9c7130}
 .total-row .balance-final{background:#fbe98c;font-weight:800}
 .ledger-table tbody tr.row-carry td{color:var(--muted);font-style:italic;background:#fafbfb}
-.ledger-table th.rate-col,.ledger-table td.rate-col{width:50px;font-size:10px;color:var(--muted);font-weight:400}
+.ledger-table th.rate-col,.ledger-table td.rate-col{width:50px;font-size:11px;color:var(--muted);font-weight:400;text-align:right;padding-left:4px;padding-right:6px}
 .supplier-report-table{overflow:visible}
 .supplier-report-table table{min-width:0;width:100%;table-layout:auto}
-.supplier-ledger th,.supplier-ledger td{font-size:12.5px;color:var(--ink);font-weight:500}
+.supplier-ledger th,.supplier-ledger td{font-size:14px;color:var(--ink);font-weight:500}
 .supplier-ledger thead th{background:#eaf3f2;color:var(--navy);font-weight:700}
 .supplier-ledger th.balance-col,.supplier-ledger td.balance-col{width:135px;padding-left:8px;padding-right:8px}
 .supplier-ledger th.expense-col,.supplier-ledger td.expense-col{width:98px;padding-left:6px;padding-right:6px;white-space:nowrap}
 .supplier-ledger th.label-col,.supplier-ledger td.label-col{width:260px}
 .supplier-ledger tbody tr.row-deposit td{background:#f2f9f6}
+
+/* وضع مضغوط مؤقت يُفعَّل فقط أثناء التقاط صورة الحساب لتقليل مساحة الجدول الإجمالية دون التأثير على العرض الحي */
+.capturing .statement-head{padding:14px}
+.capturing .client-name{font-size:16px}
+.capturing .report-summary{gap:12px}
+.capturing .report-summary span{padding:10px 14px}
+.capturing .supplier-ledger th,.capturing .supplier-ledger td{padding:7px 12px;font-size:11px}
+.capturing .ledger-table th.rate-col,.capturing .ledger-table td.rate-col{font-size:9px;padding-left:2px;padding-right:4px}
+.capturing .supplier-ledger th.balance-col,.capturing .supplier-ledger td.balance-col{width:110px;padding-left:6px;padding-right:6px}
+.capturing .supplier-ledger th.expense-col,.capturing .supplier-ledger td.expense-col{width:80px;padding-left:5px;padding-right:5px}
+.capturing .supplier-ledger th.label-col,.capturing .supplier-ledger td.label-col{width:210px}
 .supplier-ledger tbody tr.row-withdrawal td{background:#fdf3f3}
 .stats.four-col{grid-template-columns:repeat(4,1fr)}
 @media(max-width:1050px){.stats.four-col{grid-template-columns:1fr 1fr}}

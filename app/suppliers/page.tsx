@@ -765,6 +765,7 @@ function SupplierStatement({
   async function copyAsImage() {
     if (!captureRef.current) return;
     setCopying(true);
+    captureRef.current.classList.add("capturing");
     try {
       const { toBlob } = await import("html-to-image");
       const blob = await toBlob(captureRef.current, {
@@ -786,6 +787,7 @@ function SupplierStatement({
     } catch {
       alert("تعذّر نسخ الحساب كصورة على هذا المتصفح.");
     } finally {
+      captureRef.current?.classList.remove("capturing");
       setCopying(false);
     }
   }
