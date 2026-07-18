@@ -1,2 +1,2 @@
-:HL["/athar-accounts/_next/static/chunks/0dzfp1buri661.css","style"]
-0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"clients","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"p6PJQ0r0gIgGOIUyonq7F"}
+:HL["/athar-accounts/_next/static/chunks/0ihfx~ksa6yhl.css","style"]
+0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"clients","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"s6-sX7dCrAH7aBuwIL5Kn"}
