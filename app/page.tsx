@@ -327,6 +327,19 @@ export default function Home() {
     setReport({ clientId: client.id, asOfDate: reportDateInput, result });
   }
 
+  function printReport() {
+    // المتصفح يضيف عنوان الصفحة تلقائيًا في ترويسة الطباعة؛ نُفرغه مؤقتًا حتى لا يظهر
+    // اسم النظام والشركة أعلى كشف الحساب المطبوع، ثم نُعيده بعد انتهاء الطباعة.
+    const originalTitle = document.title;
+    document.title = "";
+    const restoreTitle = () => {
+      document.title = originalTitle;
+      window.removeEventListener("afterprint", restoreTitle);
+    };
+    window.addEventListener("afterprint", restoreTitle);
+    window.print();
+  }
+
   const reportClient = report ? clients.find((c) => c.id === report.clientId) : null;
   const withdrawalPreview =
     withdrawalClientId && withdrawalDate
@@ -896,7 +909,7 @@ export default function Home() {
                     عرض التقرير
                   </button>
                   {report && (
-                    <button className="secondary" onClick={() => window.print()}>
+                    <button className="secondary" onClick={printReport}>
                       طباعة / حفظ PDF
                     </button>
                   )}
