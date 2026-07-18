@@ -22,7 +22,6 @@ const seedClients: Client[] = [
   {
     id: "demo",
     name: "عميل تجريبي",
-    phone: "",
     notes: "بيانات تجريبية — يمكن حذف الحساب والبدء ببياناتك.",
     tranches: [{ id: "t1", amount: 100000, date: "2024-01-15", note: "الدفعة الأولى" }],
     withdrawals: [],
@@ -152,7 +151,7 @@ export default function Home() {
       setClients((v) =>
         v.map((c) =>
           c.id === editingClient.id
-            ? { ...c, name, phone: String(fd.get("phone") || ""), notes: String(fd.get("notes") || "") }
+            ? { ...c, name, notes: String(fd.get("notes") || "") }
             : c,
         ),
       );
@@ -161,7 +160,6 @@ export default function Home() {
       const client: Client = {
         id: uid(),
         name,
-        phone: String(fd.get("phone") || ""),
         notes: String(fd.get("notes") || ""),
         tranches: [],
         withdrawals: [],
@@ -597,10 +595,7 @@ export default function Home() {
                       <span className="company-dot">{selectedClient.name.slice(0, 1)}</span>
                       <div>
                         <h3>{selectedClient.name}</h3>
-                        <p>
-                          {selectedClient.phone || "بدون رقم هاتف"} ·{" "}
-                          {selectedClient.notes || "بدون ملاحظات"}
-                        </p>
+                        <p>{selectedClient.notes || "بدون ملاحظات"}</p>
                       </div>
                     </div>
                   </div>
@@ -914,15 +909,15 @@ export default function Home() {
                 <div className="print-title">
                   <h1>كشف حساب — حسابات خاصة</h1>
                   <p>
-                    مجموعة شركات آثار للسياحة · تاريخ التقرير {report.asOfDate} · أُصدر بتاريخ {today()}
+                    تاريخ التقرير {report.asOfDate} · أُصدر بتاريخ {today()}
                   </p>
                 </div>
                 <div className="panel">
                   <div className="statement-head">
                     <div>
-                      <h2 className="client-name">{reportClient.name}</h2>
+                      <h2 className="client-name print-hide">{reportClient.name}</h2>
                       <p style={{ margin: 0, color: "var(--muted)", fontSize: 12 }}>
-                        {reportClient.phone || "بدون رقم هاتف"} · {reportClient.tranches.length} دفعة مسجلة
+                        {reportClient.tranches.length} دفعة مسجلة
                       </p>
                     </div>
                     <div className="as-of">
@@ -1051,10 +1046,6 @@ export default function Home() {
               <label className="wide">
                 اسم العميل
                 <input name="name" required defaultValue={editingClient?.name} />
-              </label>
-              <label>
-                رقم الهاتف
-                <input name="phone" defaultValue={editingClient?.phone} />
               </label>
               <label className="wide">
                 ملاحظات
