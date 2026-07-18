@@ -1,7 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
+import {
+  ChangeEvent,
+  FormEvent,
+  PointerEvent as ReactPointerEvent,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 const services = [
   { href: "/clients", icon: "▤", title: "حسابات خاصة" },
@@ -11,6 +18,10 @@ const services = [
 type StickyNote = {
   id: string;
   text: string;
+  createdAt?: string;
+  x?: number;
+  y?: number;
+  z?: number;
 };
 
 const NOTES_STORAGE_KEY = "athar-home-sticky-notes-v1";
@@ -23,6 +34,11 @@ export default function Home() {
   const [noteText, setNoteText] = useState("");
   const [notesLoaded, setNotesLoaded] = useState(false);
   const restoreFileRef = useRef<HTMLInputElement>(null);
+  const draggingNote = useRef<{
+    id: string;
+    offsetX: number;
+    offsetY: number;
+  } | null>(null);
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -49,7 +65,14 @@ export default function Home() {
     if (!text) return;
 
     setNotes((currentNotes) => [
-      { id: crypto.randomUUID(), text },
+      {
+        id: crypto.randomUUID(),
+        text,
+        createdAt: new Date().toISOString(),
+        x: 24 + (currentNotes.length % 4) * 34,
+        y: Math.max(16, 150 + (currentNotes.length % 4) * 28),
+        z: Date.now(),
+      },
       ...currentNotes,
     ]);
     setNoteText("");
@@ -57,6 +80,57 @@ export default function Home() {
 
   const deleteNote = (id: string) => {
     setNotes((currentNotes) => currentNotes.filter((note) => note.id !== id));
+  };
+
+  const startDraggingNote = (
+    event: ReactPointerEvent<HTMLSpanElement>,
+    note: StickyNote,
+  ) => {
+    const noteElement = event.currentTarget.closest(
+      ".sticky-note",
+    ) as HTMLElement | null;
+    if (!noteElement) return;
+    const rect = noteElement.getBoundingClientRect();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    draggingNote.current = {
+      id: note.id,
+      offsetX: event.clientX - rect.left,
+      offsetY: event.clientY - rect.top,
+    };
+    setNotes((currentNotes) =>
+      currentNotes.map((currentNote) =>
+        currentNote.id === note.id
+          ? { ...currentNote, z: Date.now() }
+          : currentNote,
+      ),
+    );
+  };
+
+  const moveDraggingNote = (event: ReactPointerEvent<HTMLSpanElement>) => {
+    const drag = draggingNote.current;
+    if (!drag) return;
+    const noteWidth = Math.min(270, window.innerWidth - 24);
+    const noteHeight = 190;
+    const x = Math.min(
+      Math.max(12, event.clientX - drag.offsetX),
+      Math.max(12, window.innerWidth - noteWidth - 12),
+    );
+    const y = Math.min(
+      Math.max(12, event.clientY - drag.offsetY),
+      Math.max(12, window.innerHeight - noteHeight - 12),
+    );
+    setNotes((currentNotes) =>
+      currentNotes.map((note) =>
+        note.id === drag.id ? { ...note, x, y } : note,
+      ),
+    );
+  };
+
+  const stopDraggingNote = (event: ReactPointerEvent<HTMLSpanElement>) => {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    draggingNote.current = null;
   };
 
   const backupSystem = () => {
@@ -162,32 +236,6 @@ export default function Home() {
         ))}
       </div>
 
-      <section className="system-backup" aria-labelledby="system-backup-title">
-        <div>
-          <h2 id="system-backup-title">بيانات النظام</h2>
-          <p>نسخة واحدة تشمل الحسابات الخاصة والموردين والملاحظات.</p>
-        </div>
-        <div className="system-backup-actions">
-          <button type="button" onClick={backupSystem}>
-            ↓ نسخ احتياطي كامل
-          </button>
-          <button
-            type="button"
-            className="restore"
-            onClick={() => restoreFileRef.current?.click()}
-          >
-            ↑ استعادة بيانات النظام
-          </button>
-          <input
-            ref={restoreFileRef}
-            type="file"
-            accept=".json,application/json"
-            hidden
-            onChange={restoreSystem}
-          />
-        </div>
-      </section>
-
       <section className="sticky-board" aria-labelledby="sticky-notes-title">
         <div className="sticky-board-head">
           <div>
@@ -214,31 +262,85 @@ export default function Home() {
           </div>
         </form>
 
-        {notesLoaded && notes.length === 0 ? (
+        {notesLoaded && notes.length === 0 && (
           <p className="sticky-empty">لا توجد ملاحظات حالياً.</p>
-        ) : (
-          <div className="sticky-notes" aria-live="polite">
-            {notes.map((note, index) => (
-              <article
-                className={`sticky-note sticky-note-${index % 3}`}
-                key={note.id}
-              >
-                <span className="sticky-tape" aria-hidden="true" />
-                <button
-                  type="button"
-                  className="sticky-delete"
-                  onClick={() => deleteNote(note.id)}
-                  aria-label={`حذف الملاحظة: ${note.text}`}
-                  title="حذف الملاحظة"
-                >
-                  ×
-                </button>
-                <p>{note.text}</p>
-              </article>
-            ))}
-          </div>
         )}
       </section>
+
+      <section className="system-backup" aria-labelledby="system-backup-title">
+        <div>
+          <h2 id="system-backup-title">بيانات النظام</h2>
+          <p>نسخة واحدة تشمل الحسابات الخاصة والموردين والملاحظات.</p>
+        </div>
+        <div className="system-backup-actions">
+          <button type="button" onClick={backupSystem}>
+            ↓ نسخ احتياطي كامل
+          </button>
+          <button
+            type="button"
+            className="restore"
+            onClick={() => restoreFileRef.current?.click()}
+          >
+            ↑ استعادة بيانات النظام
+          </button>
+          <input
+            ref={restoreFileRef}
+            type="file"
+            accept=".json,application/json"
+            hidden
+            onChange={restoreSystem}
+          />
+        </div>
+      </section>
+
+      <div className="sticky-notes" aria-live="polite">
+        {notes.map((note, index) => (
+          <article
+            className={`sticky-note sticky-note-${index % 3}`}
+            key={note.id}
+            style={{
+              left: note.x ?? 24 + (index % 4) * 34,
+              top: note.y ?? 150 + (index % 5) * 34,
+              zIndex: note.z ?? 100 + index,
+            }}
+          >
+            <span
+              className="sticky-tape"
+              role="button"
+              tabIndex={0}
+              aria-label={`تحريك الملاحظة: ${note.text}`}
+              title="اسحب لتحريك الملاحظة"
+              onPointerDown={(event) => startDraggingNote(event, note)}
+              onPointerMove={moveDraggingNote}
+              onPointerUp={stopDraggingNote}
+              onPointerCancel={stopDraggingNote}
+            />
+            <button
+              type="button"
+              className="sticky-delete"
+              onClick={() => deleteNote(note.id)}
+              aria-label={`حذف الملاحظة: ${note.text}`}
+              title="حذف الملاحظة"
+            >
+              ×
+            </button>
+            <p>{note.text}</p>
+            <time
+              className="sticky-date"
+              dateTime={note.createdAt}
+              title={note.createdAt ? "تاريخ تدوين الملاحظة" : undefined}
+            >
+              {note.createdAt
+                ? new Intl.DateTimeFormat("ar-EG", {
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                  }).format(new Date(note.createdAt))
+                : "ملاحظة سابقة"}
+            </time>
+          </article>
+        ))}
+      </div>
     </div>
   );
 }
