@@ -24,7 +24,6 @@ const seedSuppliers: Supplier[] = [
   {
     id: "demo",
     name: "مورد تجريبي",
-    phone: "",
     notes: "بيانات تجريبية — يمكن حذف الحساب والبدء ببياناتك.",
     currency: "AED",
     openingBalance: 0,
@@ -116,7 +115,6 @@ export default function SuppliersPage() {
             ? {
                 ...s,
                 name,
-                phone: String(fd.get("phone") || ""),
                 notes: String(fd.get("notes") || ""),
                 currency,
                 openingBalance,
@@ -130,7 +128,6 @@ export default function SuppliersPage() {
       const supplier: Supplier = {
         id: uid(),
         name,
-        phone: String(fd.get("phone") || ""),
         notes: String(fd.get("notes") || ""),
         currency,
         openingBalance,
@@ -443,17 +440,29 @@ export default function SuppliersPage() {
                       <div>
                         <h3>{selectedSupplier.name}</h3>
                         <p>
-                          {selectedSupplier.phone || "بدون رقم هاتف"} · {currencyLabel(selectedSupplier.currency)} ·{" "}
-                          {selectedSupplier.notes || "بدون ملاحظات"}
+                          {currencyLabel(selectedSupplier.currency)} · {selectedSupplier.notes || "بدون ملاحظات"}
                         </p>
                       </div>
                     </div>
                   </div>
                   <div className="subhead">
                     <b>حركة الحساب بالتسلسل الزمني</b>
-                    <button type="button" className="text-btn" onClick={() => openTxModal(selectedSupplier.id)}>
-                      ＋ حركة جديدة (توريد أو سداد)
-                    </button>
+                    <div className="tx-type-actions">
+                      <button
+                        type="button"
+                        className="tx-btn-supply"
+                        onClick={() => openTxModal(selectedSupplier.id, "supply")}
+                      >
+                        ＋ توريد جديد
+                      </button>
+                      <button
+                        type="button"
+                        className="tx-btn-payment"
+                        onClick={() => openTxModal(selectedSupplier.id, "payment")}
+                      >
+                        ＋ سداد جديد
+                      </button>
+                    </div>
                   </div>
                   <SupplierStatement
                     supplier={selectedSupplier}
@@ -593,10 +602,6 @@ export default function SuppliersPage() {
               <label className="wide">
                 اسم المورد
                 <input name="name" required defaultValue={editingSupplier?.name} />
-              </label>
-              <label>
-                رقم الهاتف
-                <input name="phone" defaultValue={editingSupplier?.phone} />
               </label>
               <label>
                 عملة المورد
@@ -751,6 +756,7 @@ function SupplierStatement({
   const sheetForeign = sheet.rows.filter((r) => r.kind === "supply").reduce((sum, r) => sum + (r.currencyAmount || 0), 0);
   const sheetClosing = sheet.rows.length ? sheet.rows[sheet.rows.length - 1].balanceAfter : supplier.openingBalance;
   const columnCount = editable ? 8 : 7;
+  const excelPadRows = Math.max(0, 3 - sheet.rows.length);
 
   async function copyAsImage() {
     if (!compactRef.current) return;
@@ -786,9 +792,7 @@ function SupplierStatement({
       <div className="statement-head print-hide">
         <div>
           <h2 className="client-name">{supplier.name}</h2>
-          <p style={{ margin: 0, color: "var(--muted)", fontSize: 12 }}>
-            {supplier.phone || "بدون رقم هاتف"} · {currencyLabel(supplier.currency)}
-          </p>
+          <p style={{ margin: 0, color: "var(--muted)", fontSize: 12 }}>{currencyLabel(supplier.currency)}</p>
         </div>
         <div className="as-of">
           <small style={{ color: "var(--muted)", fontSize: 11 }}>محسوب حتى تاريخ</small>
@@ -798,16 +802,16 @@ function SupplierStatement({
 
       <div className="report-summary print-keep" style={{ margin: "0 0 18px" }}>
         <span>
-          الرصيد السابق <b>{egpMoney(supplier.openingBalance)}</b>
+          الرصيد السابق <b>{egpMoney(Math.round(supplier.openingBalance))}</b>
         </span>
         <span>
-          إجمالي التوريدات <b>{egpMoney(ledger.summary.totalSuppliedEgp)}</b>
+          إجمالي التوريدات <b>{egpMoney(Math.round(ledger.summary.totalSuppliedEgp))}</b>
         </span>
         <span>
-          إجمالي المسدد <b>{egpMoney(ledger.summary.totalPaid)}</b>
+          إجمالي المسدد <b>{egpMoney(Math.round(ledger.summary.totalPaid))}</b>
         </span>
         <span>
-          الرصيد المستحق للمورد <b>{egpMoney(ledger.summary.balance)}</b>
+          الرصيد المستحق للمورد <b>{egpMoney(Math.round(ledger.summary.balance))}</b>
         </span>
       </div>
 
@@ -821,7 +825,7 @@ function SupplierStatement({
         </div>
       )}
 
-      <div className="panel report-table">
+      <div className="panel report-table supplier-report-table">
         {sheets.length > 1 && (
           <div className="panel-head">
             <div>
@@ -832,11 +836,13 @@ function SupplierStatement({
             </div>
           </div>
         )}
-        <table className="ledger-table">
+        <table className="ledger-table supplier-ledger">
           <thead>
             <tr>
               <th rowSpan={2}>م</th>
-              <th rowSpan={2}>رصيد</th>
+              <th rowSpan={2} className="balance-col">
+                رصيد
+              </th>
               <th colSpan={2}>وارد</th>
               <th rowSpan={2}>مصروف</th>
               <th rowSpan={2}>بيان</th>
@@ -864,12 +870,12 @@ function SupplierStatement({
                   }
                 >
                   <td>{row.kind === "carry" ? "—" : row.seq}</td>
-                  <td>
-                    <b>{egpMoney(row.balanceAfter)}</b>
+                  <td className="balance-col">
+                    <b>{egpMoney(Math.round(row.balanceAfter))}</b>
                   </td>
-                  <td>{row.kind === "supply" ? row.currencyAmount : ""}</td>
+                  <td>{row.kind === "supply" ? Math.round(row.currencyAmount || 0) : ""}</td>
                   <td className="rate-col">{row.kind === "supply" ? row.rate : ""}</td>
-                  <td>{row.kind === "payment" ? egpMoney(-row.egpDelta) : ""}</td>
+                  <td>{row.kind === "payment" ? egpMoney(Math.round(-row.egpDelta)) : ""}</td>
                   <td>{row.label}</td>
                   <td>{row.date}</td>
                   {editable && (
@@ -900,10 +906,10 @@ function SupplierStatement({
             <tfoot>
               <tr className="total-row">
                 <td></td>
-                <td className="balance-final">{egpMoney(sheetClosing)}</td>
-                <td>{sheetForeign}</td>
+                <td className="balance-final balance-col">{egpMoney(Math.round(sheetClosing))}</td>
+                <td>{Math.round(sheetForeign)}</td>
                 <td className="rate-col"></td>
-                <td>{egpMoney(sheetPaid)}</td>
+                <td>{egpMoney(Math.round(sheetPaid))}</td>
                 <td colSpan={2}>الإجمالي — كشف رقم {sheet.index}</td>
                 {editable && <td className="print-hide"></td>}
               </tr>
@@ -968,6 +974,17 @@ function SupplierStatement({
                   <td>{row.kind === "payment" ? plainNumber(-row.egpDelta) : ""}</td>
                   <td className="excel-label">{row.label}</td>
                   <td>{shortDate(row.date)}</td>
+                </tr>
+              ))}
+              {Array.from({ length: excelPadRows }).map((_, i) => (
+                <tr key={`pad-${i}`} className="excel-row-pad">
+                  <td>{" "}</td>
+                  <td>{" "}</td>
+                  <td>{" "}</td>
+                  <td className="excel-rate">{" "}</td>
+                  <td>{" "}</td>
+                  <td className="excel-label">{" "}</td>
+                  <td>{" "}</td>
                 </tr>
               ))}
             </tbody>
