@@ -27,3 +27,43 @@
 .statement-head .as-of{text-align:left}
 .statement-head .as-of b{display:block;font-size:15px;color:var(--teal)}
 @media print{.statement-head{border-bottom:2px solid var(--navy)}}
+
+/* حسابات الموردين — شارات العملة وتمييز الرصيد الختامي */
+.badge.aed{background:#e6f0f6;color:#2c6488}
+.badge.sar{background:#f5eedf;color:#9c7130}
+.total-row .balance-final{background:#fbe98c;font-weight:800}
+.ledger-table tbody tr.row-carry td{color:var(--muted);font-style:italic;background:#fafbfb}
+.stats.four-col{grid-template-columns:repeat(4,1fr)}
+@media(max-width:1050px){.stats.four-col{grid-template-columns:1fr 1fr}}
+
+/* كشف حساب مضغوط بشكل جدول إكسل — يُستخدم فقط عند نسخ الحساب كصورة.
+   يبقى خارج الشاشة المرئية دائمًا، ويظهر لحظيًا داخل نافذة العرض أثناء الالتقاط فقط
+   لأن التصيير الصحيح للنص العربي في المكتبة يتطلب أن يكون العنصر ظاهرًا فعليًا. */
+.excel-capture-wrap{position:fixed;top:-6000px;right:0;z-index:-1}
+.excel-capture-wrap.visible{position:fixed;inset:0;top:0;right:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:#0a1e29c0}
+.excel-capture{direction:rtl;background:#fff;width:max-content;box-shadow:0 20px 60px #0006}
+.excel-capture table{border-collapse:collapse;table-layout:fixed;width:570px;min-width:0;font-family:"Segoe UI",Tahoma,Arial,sans-serif}
+.excel-capture th,.excel-capture td{border:1px solid #999;padding:4px 5px;font-size:11px;line-height:1.3;text-align:center;white-space:nowrap;overflow:hidden;color:#161616}
+.excel-capture thead tr:first-child th{font-size:14px;font-weight:800;padding:8px}
+.excel-capture thead tr:nth-child(2) th,.excel-capture thead tr:nth-child(3) th{background:#eef1f3;font-weight:700}
+.excel-capture .excel-label{text-align:right}
+.excel-capture tfoot td{font-weight:800;background:#eaf4f2}
+.excel-capture .excel-highlight{background:#ffe600}
+
+/* رابط العودة لكل الخدمات داخل الشريط الجانبي — بنفس شكل أزرار الشريط الجانبي البسيطة */
+.side-link{display:block;border:0;background:transparent;color:#bdd0d9;border-radius:10px;padding:13px 14px;text-align:right;font:inherit;cursor:pointer;text-decoration:none}
+.side-link:hover{background:#ffffff10}
+
+/* الصفحة الرئيسية — اختيار الخدمة */
+.landing{min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:60px 24px;background:linear-gradient(180deg,#f5f7f8,#eef2f3)}
+.landing-head{display:flex;gap:16px;align-items:center;max-width:720px;text-align:right;margin-bottom:44px}
+.landing-head h1{margin:0;font-size:28px;color:var(--navy)}
+.landing-head p{margin:8px 0 0;color:var(--muted);font-size:14px}
+.service-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;max-width:900px;width:100%}
+.service-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:28px;text-decoration:none;color:var(--ink);box-shadow:0 4px 14px #132f3d0d;position:relative;transition:transform .15s,border-color .15s}
+.service-card:hover{transform:translateY(-2px);border-color:#8ebdbb}
+.service-icon{display:grid;place-items:center;width:48px;height:48px;border-radius:12px;background:#e6f2f1;color:var(--teal);font-weight:900;font-size:20px;margin-bottom:16px}
+.service-card h2{margin:0 0 8px;font-size:18px}
+.service-card p{margin:0;color:var(--muted);font-size:12.5px;line-height:1.8}
+.service-card .arrow{position:absolute;top:28px;left:28px;color:var(--teal);font-size:20px}
+@media(max-width:760px){.service-grid{grid-template-columns:1fr}.landing{padding:36px 18px}.landing-head{flex-direction:column;text-align:center}}

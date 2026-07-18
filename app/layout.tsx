@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "حسابات خاصة",
-  description: "نظام متابعة حسابات العملاء الخاصة وعوائدها الشهرية ومسحوباتهم",
+  title: "نظام الحسابات",
+  description: "نظام حسابات يضم حسابات العملاء الخاصة وعوائدها الشهرية، وحسابات الموردين وتوريداتهم وسداداتهم",
   robots: {
     index: false,
     follow: false,

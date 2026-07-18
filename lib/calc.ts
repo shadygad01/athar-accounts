@@ -43,7 +43,7 @@ export const monthsAr = [
 ];
 
 export const money = (n: number) =>
-  new Intl.NumberFormat("ar-EG", { maximumFractionDigits: 2 }).format(
+  new Intl.NumberFormat("ar-EG", { maximumFractionDigits: 2, numberingSystem: "latn" }).format(
     Math.round((n + Number.EPSILON) * 100) / 100,
   ) + " ج.م";
 
