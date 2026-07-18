@@ -1,12 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { money as egpMoney, today, uid } from "@/lib/calc";
 import {
   Supplier,
   SupplierCurrency,
-  SupplierLedgerResult,
   SupplierTx,
   SupplierTxType,
   buildSupplierLedger,
@@ -14,6 +13,9 @@ import {
   currencySymbol,
   foreignMoney,
   lastRate,
+  paginateLedger,
+  plainNumber,
+  shortDate,
 } from "@/lib/suppliers";
 
 const SUPPLIERS_KEY = "athar-suppliers-accounts-suppliers-v1";
@@ -32,7 +34,7 @@ const seedSuppliers: Supplier[] = [
 ];
 
 type View = "dashboard" | "suppliers" | "transactions" | "reports";
-type Modal = "newSupplier" | "editSupplier" | "supply" | "editSupply" | "payment" | "editPayment" | null;
+type Modal = "newSupplier" | "editSupplier" | "tx" | "editTx" | null;
 
 const nav: { id: View; label: string; icon: string }[] = [
   { id: "dashboard", label: "لوحة المتابعة", icon: "◫" },
@@ -57,7 +59,7 @@ export default function SuppliersPage() {
 
   const [reportSupplierId, setReportSupplierId] = useState<string>("");
   const [reportDateInput, setReportDateInput] = useState<string>(today());
-  const [report, setReport] = useState<{ supplierId: string; asOfDate: string; result: SupplierLedgerResult } | null>(null);
+  const [report, setReport] = useState<{ supplierId: string; asOfDate: string } | null>(null);
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
@@ -163,7 +165,7 @@ export default function SuppliersPage() {
             ? {
                 ...s,
                 transactions: s.transactions.map((t) =>
-                  t.id === editingTx.tx.id ? { ...t, date, amount, rate, note } : t,
+                  t.id === editingTx.tx.id ? { ...t, date, type: txType, amount, rate, note } : t,
                 ),
               }
             : s,
@@ -189,6 +191,25 @@ export default function SuppliersPage() {
     );
   }
 
+  function openTxModal(supplierId: string, type: SupplierTxType = "supply") {
+    setEditingTx(null);
+    setTxSupplierId(supplierId);
+    setTxType(type);
+    setTxAmountInput("");
+    const supplier = suppliers.find((s) => s.id === supplierId);
+    setTxRateInput(type === "supply" && supplier ? String(lastRate(supplier) ?? "") : "");
+    setModal("tx");
+  }
+
+  function openEditTxModal(supplierId: string, tx: SupplierTx) {
+    setEditingTx({ supplierId, tx });
+    setTxSupplierId(supplierId);
+    setTxType(tx.type);
+    setTxAmountInput(String(tx.amount));
+    setTxRateInput(String(tx.rate ?? ""));
+    setModal("editTx");
+  }
+
   function generateReport() {
     const supplier = suppliers.find((s) => s.id === reportSupplierId);
     if (!supplier) {
@@ -196,32 +217,12 @@ export default function SuppliersPage() {
       return;
     }
     if (!reportDateInput) return;
-    const result = buildSupplierLedger(supplier, reportDateInput);
-    setReport({ supplierId: supplier.id, asOfDate: reportDateInput, result });
+    setReport({ supplierId: supplier.id, asOfDate: reportDateInput });
   }
 
   const reportSupplier = report ? suppliers.find((s) => s.id === report.supplierId) : null;
   const txSupplier = suppliers.find((s) => s.id === txSupplierId) || null;
   const computedEgp = txSupplier && txType === "supply" ? (Number(txAmountInput) || 0) * (Number(txRateInput) || 0) : 0;
-
-  function openSupplyModal(supplierId: string) {
-    setEditingTx(null);
-    setTxSupplierId(supplierId);
-    setTxType("supply");
-    setTxAmountInput("");
-    const supplier = suppliers.find((s) => s.id === supplierId);
-    setTxRateInput(supplier ? String(lastRate(supplier) ?? "") : "");
-    setModal("supply");
-  }
-
-  function openPaymentModal(supplierId: string) {
-    setEditingTx(null);
-    setTxSupplierId(supplierId);
-    setTxType("payment");
-    setTxAmountInput("");
-    setTxRateInput("");
-    setModal("payment");
-  }
 
   return (
     <div className="app" dir="rtl">
@@ -420,10 +421,11 @@ export default function SuppliersPage() {
                     onClick={() => {
                       setReportSupplierId(selectedSupplier.id);
                       setReportDateInput(today());
+                      setReport(null);
                       setView("reports");
                     }}
                   >
-                    تقرير المورد
+                    تقرير بتاريخ محدد
                   </button>
                   <button className="danger-link" onClick={() => deleteSupplier(selectedSupplier.id)}>
                     حذف المورد
@@ -442,149 +444,19 @@ export default function SuppliersPage() {
                       </div>
                     </div>
                   </div>
-                  {(() => {
-                    const ledger = ledgersToday.get(selectedSupplier.id)!;
-                    return (
-                      <div className="contract-grid">
-                        <span>
-                          <small>الرصيد السابق</small>
-                          <b>{egpMoney(selectedSupplier.openingBalance)}</b>
-                        </span>
-                        <span>
-                          <small>إجمالي التوريدات</small>
-                          <b>{egpMoney(ledger.summary.totalSuppliedEgp)}</b>
-                        </span>
-                        <span>
-                          <small>إجمالي المسدد</small>
-                          <b>{egpMoney(ledger.summary.totalPaid)}</b>
-                        </span>
-                        <span>
-                          <small>الرصيد المستحق حاليًا</small>
-                          <b>{egpMoney(ledger.summary.balance)}</b>
-                        </span>
-                      </div>
-                    );
-                  })()}
                   <div className="subhead">
-                    <b>التوريدات</b>
-                    <button type="button" className="text-btn" onClick={() => openSupplyModal(selectedSupplier.id)}>
-                      ＋ توريد جديد
+                    <b>حركة الحساب بالتسلسل الزمني</b>
+                    <button type="button" className="text-btn" onClick={() => openTxModal(selectedSupplier.id)}>
+                      ＋ حركة جديدة (توريد أو سداد)
                     </button>
                   </div>
-                  <div className="table-wrap">
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>التاريخ</th>
-                          <th>المبلغ بالعملة</th>
-                          <th>معامل الصرف</th>
-                          <th>القيمة بالجنيه</th>
-                          <th>بيان</th>
-                          <th></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedSupplier.transactions.filter((t) => t.type === "supply").length ? (
-                          [...selectedSupplier.transactions]
-                            .filter((t) => t.type === "supply")
-                            .sort((a, b) => a.date.localeCompare(b.date))
-                            .map((t) => (
-                              <tr key={t.id}>
-                                <td>{t.date}</td>
-                                <td>{foreignMoney(t.amount, selectedSupplier.currency)}</td>
-                                <td>{t.rate}</td>
-                                <td>{egpMoney(t.amount * (t.rate || 0))}</td>
-                                <td>{t.note || "—"}</td>
-                                <td>
-                                  <div className="payment-actions">
-                                    <button
-                                      className="edit-payment"
-                                      onClick={() => {
-                                        setEditingTx({ supplierId: selectedSupplier.id, tx: t });
-                                        setTxSupplierId(selectedSupplier.id);
-                                        setTxType("supply");
-                                        setTxAmountInput(String(t.amount));
-                                        setTxRateInput(String(t.rate ?? ""));
-                                        setModal("editSupply");
-                                      }}
-                                    >
-                                      تعديل
-                                    </button>
-                                    <button className="delete-payment" onClick={() => deleteTx(selectedSupplier.id, t.id)}>
-                                      حذف
-                                    </button>
-                                  </div>
-                                </td>
-                              </tr>
-                            ))
-                        ) : (
-                          <tr>
-                            <td colSpan={6} className="empty">
-                              لا توجد توريدات مسجلة لهذا المورد
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                  <div className="subhead">
-                    <b>السدادات</b>
-                    <button type="button" className="text-btn" onClick={() => openPaymentModal(selectedSupplier.id)}>
-                      ＋ سداد جديد
-                    </button>
-                  </div>
-                  <div className="table-wrap">
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>التاريخ</th>
-                          <th>المبلغ (جنيه)</th>
-                          <th>بيان</th>
-                          <th></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedSupplier.transactions.filter((t) => t.type === "payment").length ? (
-                          [...selectedSupplier.transactions]
-                            .filter((t) => t.type === "payment")
-                            .sort((a, b) => b.date.localeCompare(a.date))
-                            .map((t) => (
-                              <tr key={t.id}>
-                                <td>{t.date}</td>
-                                <td>{egpMoney(t.amount)}</td>
-                                <td>{t.note || "—"}</td>
-                                <td>
-                                  <div className="payment-actions">
-                                    <button
-                                      className="edit-payment"
-                                      onClick={() => {
-                                        setEditingTx({ supplierId: selectedSupplier.id, tx: t });
-                                        setTxSupplierId(selectedSupplier.id);
-                                        setTxType("payment");
-                                        setTxAmountInput(String(t.amount));
-                                        setTxRateInput("");
-                                        setModal("editPayment");
-                                      }}
-                                    >
-                                      تعديل
-                                    </button>
-                                    <button className="delete-payment" onClick={() => deleteTx(selectedSupplier.id, t.id)}>
-                                      حذف
-                                    </button>
-                                  </div>
-                                </td>
-                              </tr>
-                            ))
-                        ) : (
-                          <tr>
-                            <td colSpan={4} className="empty">
-                              لا توجد سدادات مسجلة لهذا المورد
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
+                  <SupplierStatement
+                    supplier={selectedSupplier}
+                    asOfDate={today()}
+                    editable
+                    onEdit={(tx) => openEditTxModal(selectedSupplier.id, tx)}
+                    onDelete={(txId) => deleteTx(selectedSupplier.id, txId)}
+                  />
                 </div>
               </>
             ) : null}
@@ -630,17 +502,7 @@ export default function SuppliersPage() {
                         <td>{t.note || "—"}</td>
                         <td>
                           <div className="payment-actions">
-                            <button
-                              className="edit-payment"
-                              onClick={() => {
-                                setEditingTx({ supplierId: t.supplierId, tx: t });
-                                setTxSupplierId(t.supplierId);
-                                setTxType(t.type);
-                                setTxAmountInput(String(t.amount));
-                                setTxRateInput(String(t.rate ?? ""));
-                                setModal(t.type === "supply" ? "editSupply" : "editPayment");
-                              }}
-                            >
+                            <button className="edit-payment" onClick={() => openEditTxModal(t.supplierId, t)}>
                               تعديل
                             </button>
                             <button className="delete-payment" onClick={() => deleteTx(t.supplierId, t.id)}>
@@ -709,103 +571,7 @@ export default function SuppliersPage() {
                     مجموعة شركات آثار للسياحة · تاريخ التقرير {report.asOfDate} · أُصدر بتاريخ {today()}
                   </p>
                 </div>
-                <div className="panel">
-                  <div className="statement-head">
-                    <div>
-                      <h2 className="client-name">{reportSupplier.name}</h2>
-                      <p style={{ margin: 0, color: "var(--muted)", fontSize: 12 }}>
-                        {reportSupplier.phone || "بدون رقم هاتف"} · {currencyLabel(reportSupplier.currency)}
-                      </p>
-                    </div>
-                    <div className="as-of">
-                      <small style={{ color: "var(--muted)", fontSize: 11 }}>محسوب حتى تاريخ</small>
-                      <b>{report.asOfDate}</b>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="report-summary print-keep">
-                  <span>
-                    الرصيد السابق <b>{egpMoney(reportSupplier.openingBalance)}</b>
-                  </span>
-                  <span>
-                    إجمالي التوريدات <b>{egpMoney(report.result.summary.totalSuppliedEgp)}</b>
-                  </span>
-                  <span>
-                    إجمالي التوريدات بالعملة{" "}
-                    <b>{foreignMoney(report.result.summary.totalSuppliedForeign, reportSupplier.currency)}</b>
-                  </span>
-                  <span>
-                    إجمالي المسدد <b>{egpMoney(report.result.summary.totalPaid)}</b>
-                  </span>
-                  <span>
-                    الرصيد المستحق للمورد <b>{egpMoney(report.result.summary.balance)}</b>
-                  </span>
-                </div>
-
-                <div className="panel report-table">
-                  <div className="panel-head">
-                    <div>
-                      <h2>حركة الحساب بالتسلسل الزمني</h2>
-                      <p>رصيد سابق، توريدات بعملة المورد، وسدادات بالجنيه المصري — مع الرصيد بعد كل حركة</p>
-                    </div>
-                  </div>
-                  <table className="ledger-table">
-                    <thead>
-                      <tr>
-                        <th rowSpan={2}>م</th>
-                        <th rowSpan={2}>التاريخ</th>
-                        <th rowSpan={2}>بيان</th>
-                        <th rowSpan={2}>مصروف</th>
-                        <th colSpan={2}>وارد</th>
-                        <th rowSpan={2}>رصيد</th>
-                      </tr>
-                      <tr>
-                        <th>معدل</th>
-                        <th>{`مبلغ (${currencySymbol(reportSupplier.currency)})`}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {report.result.rows.length ? (
-                        report.result.rows.map((row) => (
-                          <tr
-                            key={row.id}
-                            className={
-                              row.kind === "supply" ? "row-deposit" : row.kind === "payment" ? "row-withdrawal" : ""
-                            }
-                          >
-                            <td>{row.seq}</td>
-                            <td>{row.date}</td>
-                            <td>{row.label}</td>
-                            <td>{row.kind === "payment" ? egpMoney(-row.egpDelta) : ""}</td>
-                            <td>{row.kind === "supply" ? row.rate : ""}</td>
-                            <td>{row.kind === "supply" ? row.currencyAmount : ""}</td>
-                            <td>
-                              <b>{egpMoney(row.balanceAfter)}</b>
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan={7} className="empty">
-                            لا توجد حركات محسوبة حتى هذا التاريخ
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                    {report.result.rows.length > 0 && (
-                      <tfoot>
-                        <tr className="total-row">
-                          <td colSpan={3}>الإجمالي</td>
-                          <td>{egpMoney(report.result.summary.totalPaid)}</td>
-                          <td></td>
-                          <td>{report.result.summary.totalSuppliedForeign}</td>
-                          <td className="balance-final">{egpMoney(report.result.summary.balance)}</td>
-                        </tr>
-                      </tfoot>
-                    )}
-                  </table>
-                </div>
+                <SupplierStatement supplier={reportSupplier} asOfDate={report.asOfDate} />
               </>
             )}
             {!report && (
@@ -854,13 +620,23 @@ export default function SuppliersPage() {
         </Modal>
       )}
 
-      {(modal === "supply" || modal === "editSupply") && txSupplier && (
-        <Modal title={editingTx ? "تعديل توريد" : `توريد جديد — ${txSupplier.name}`} close={() => setModal(null)}>
+      {(modal === "tx" || modal === "editTx") && txSupplier && (
+        <Modal title={editingTx ? "تعديل حركة" : `حركة جديدة — ${txSupplier.name}`} close={() => setModal(null)}>
           <form className="form" onSubmit={saveTx}>
-            <div className="form-hint">أدخل المبلغ بعملة المورد ({currencyLabel(txSupplier.currency)}) ومعامل الصرف المتفق عليه لهذه المعاملة تحديدًا.</div>
             <div className="form-grid">
               <label>
-                {`المبلغ (${currencySymbol(txSupplier.currency)})`}
+                نوع الحركة
+                <select value={txType} onChange={(e) => setTxType(e.target.value as SupplierTxType)}>
+                  <option value="supply">توريد (وارد بعملة المورد)</option>
+                  <option value="payment">سداد (مصروف بالجنيه المصري)</option>
+                </select>
+              </label>
+              <label>
+                التاريخ
+                <input name="date" type="date" required defaultValue={editingTx?.tx.date || today()} />
+              </label>
+              <label>
+                {txType === "supply" ? `المبلغ (${currencySymbol(txSupplier.currency)})` : "المبلغ (جنيه مصري)"}
                 <input
                   name="amount"
                   type="number"
@@ -871,64 +647,36 @@ export default function SuppliersPage() {
                   onChange={(e) => setTxAmountInput(e.target.value)}
                 />
               </label>
-              <label>
-                معامل الصرف
-                <input
-                  name="rate"
-                  type="number"
-                  min="0.0001"
-                  step="0.0001"
-                  required
-                  value={txRateInput}
-                  onChange={(e) => setTxRateInput(e.target.value)}
-                />
-              </label>
-              <label>
-                التاريخ
-                <input name="date" type="date" required defaultValue={editingTx?.tx.date || today()} />
-              </label>
+              {txType === "supply" && (
+                <label>
+                  معامل الصرف
+                  <input
+                    name="rate"
+                    type="number"
+                    min="0.0001"
+                    step="0.0001"
+                    required
+                    value={txRateInput}
+                    onChange={(e) => setTxRateInput(e.target.value)}
+                  />
+                </label>
+              )}
               <label className="wide">
                 بيان / ملاحظة
-                <input name="note" defaultValue={editingTx?.tx.note} placeholder="مثال: تحويل آثار" />
+                <input
+                  name="note"
+                  defaultValue={editingTx?.tx.note}
+                  placeholder={txType === "supply" ? "مثال: تحويل آثار" : "مثال: تحويل CIB"}
+                />
               </label>
             </div>
-            {computedEgp > 0 && (
+            {txType === "supply" && computedEgp > 0 && (
               <div className="calculation-box">
                 القيمة بالجنيه المصري
                 <strong>{egpMoney(computedEgp)}</strong>
               </div>
             )}
-            <button className="primary submit">{editingTx ? "حفظ التعديلات" : "إضافة التوريد"}</button>
-          </form>
-        </Modal>
-      )}
-
-      {(modal === "payment" || modal === "editPayment") && txSupplier && (
-        <Modal title={editingTx ? "تعديل سداد" : `سداد جديد — ${txSupplier.name}`} close={() => setModal(null)}>
-          <form className="form" onSubmit={saveTx}>
-            <div className="form-grid">
-              <label>
-                المبلغ (جنيه مصري)
-                <input
-                  name="amount"
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  required
-                  value={txAmountInput}
-                  onChange={(e) => setTxAmountInput(e.target.value)}
-                />
-              </label>
-              <label>
-                التاريخ
-                <input name="date" type="date" required defaultValue={editingTx?.tx.date || today()} />
-              </label>
-              <label className="wide">
-                بيان / ملاحظة
-                <input name="note" defaultValue={editingTx?.tx.note} placeholder="مثال: تحويل CIB" />
-              </label>
-            </div>
-            <button className="primary submit">{editingTx ? "حفظ التعديلات" : "تسجيل السداد"}</button>
+            <button className="primary submit">{editingTx ? "حفظ التعديلات" : "إضافة الحركة"}</button>
           </form>
         </Modal>
       )}
@@ -945,6 +693,273 @@ function Modal({ title, close, children }: { title: string; close: () => void; c
           <button onClick={close}>×</button>
         </div>
         {children}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * كشف حساب موحّد لمورد واحد: يجمع الرصيد السابق والتوريدات والسدادات في جدول واحد بالتسلسل
+ * الزمني مع الرصيد بعد كل حركة، ويُقسَّم تلقائيًا إلى كشوف بحد أقصى 15 معاملة لكل كشف — كل
+ * كشف بعد الأول يبدأ برصيد مرحّل، وأرقام التسلسل تبقى مستمرة عبر كل الكشوف لإمكانية المراجعة.
+ */
+function SupplierStatement({
+  supplier,
+  asOfDate,
+  editable = false,
+  onEdit,
+  onDelete,
+}: {
+  supplier: Supplier;
+  asOfDate: string;
+  editable?: boolean;
+  onEdit?: (tx: SupplierTx) => void;
+  onDelete?: (txId: string) => void;
+}) {
+  const ledger = useMemo(() => buildSupplierLedger(supplier, asOfDate), [supplier, asOfDate]);
+  const sheets = useMemo(() => paginateLedger(ledger.rows), [ledger.rows]);
+  const [sheetIndex, setSheetIndex] = useState(sheets.length - 1);
+  const prevSheetCount = useRef(sheets.length);
+  const compactRef = useRef<HTMLDivElement>(null);
+  const [copying, setCopying] = useState(false);
+  const [capturing, setCapturing] = useState(false);
+
+  useEffect(() => {
+    if (sheets.length !== prevSheetCount.current) {
+      setSheetIndex(sheets.length - 1);
+      prevSheetCount.current = sheets.length;
+    }
+  }, [sheets.length]);
+
+  const sheet = sheets[Math.min(sheetIndex, sheets.length - 1)];
+  const txById = useMemo(() => new Map(supplier.transactions.map((t) => [t.id, t])), [supplier.transactions]);
+
+  const sheetPaid = sheet.rows.filter((r) => r.kind === "payment").reduce((sum, r) => sum + -r.egpDelta, 0);
+  const sheetForeign = sheet.rows.filter((r) => r.kind === "supply").reduce((sum, r) => sum + (r.currencyAmount || 0), 0);
+  const sheetClosing = sheet.rows.length ? sheet.rows[sheet.rows.length - 1].balanceAfter : supplier.openingBalance;
+  const columnCount = editable ? 8 : 7;
+
+  async function copyAsImage() {
+    if (!compactRef.current) return;
+    setCopying(true);
+    setCapturing(true);
+    try {
+      // النسخة الصحيحة للنص العربي تحتاج العنصر ظاهرًا فعليًا داخل نافذة العرض،
+      // لذا نُظهره لحظيًا فوق الصفحة قبل الالتقاط ثم نُخفيه فور الانتهاء.
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      const { toBlob } = await import("html-to-image");
+      const blob = await toBlob(compactRef.current, { backgroundColor: "#ffffff", pixelRatio: 2 });
+      if (!blob) return;
+      try {
+        await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+        alert("تم نسخ كشف الحساب كصورة، يمكنك لصقه الآن.");
+      } catch {
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `كشف حساب - ${supplier.name} - كشف ${sheet.index}.png`;
+        link.click();
+      }
+    } catch {
+      alert("تعذّر نسخ الحساب كصورة على هذا المتصفح.");
+    } finally {
+      setCapturing(false);
+      setCopying(false);
+    }
+  }
+
+  return (
+    <div>
+      <div className="statement-head print-hide">
+        <div>
+          <h2 className="client-name">{supplier.name}</h2>
+          <p style={{ margin: 0, color: "var(--muted)", fontSize: 12 }}>
+            {supplier.phone || "بدون رقم هاتف"} · {currencyLabel(supplier.currency)}
+          </p>
+        </div>
+        <div className="as-of">
+          <small style={{ color: "var(--muted)", fontSize: 11 }}>محسوب حتى تاريخ</small>
+          <b>{asOfDate}</b>
+        </div>
+      </div>
+
+      <div className="report-summary print-keep" style={{ margin: "0 0 18px" }}>
+        <span>
+          الرصيد السابق <b>{egpMoney(supplier.openingBalance)}</b>
+        </span>
+        <span>
+          إجمالي التوريدات <b>{egpMoney(ledger.summary.totalSuppliedEgp)}</b>
+        </span>
+        <span>
+          إجمالي المسدد <b>{egpMoney(ledger.summary.totalPaid)}</b>
+        </span>
+        <span>
+          الرصيد المستحق للمورد <b>{egpMoney(ledger.summary.balance)}</b>
+        </span>
+      </div>
+
+      {sheets.length > 1 && (
+        <div className="tabs print-hide">
+          {sheets.map((s) => (
+            <button key={s.index} className={s.index === sheet.index ? "active" : ""} onClick={() => setSheetIndex(s.index - 1)}>
+              كشف رقم {s.index}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="panel report-table">
+        {sheets.length > 1 && (
+          <div className="panel-head">
+            <div>
+              <h2>
+                كشف رقم {sheet.index} من {sheet.total}
+              </h2>
+              <p>أرشيف حساب {supplier.name} — الأرقام مستمرة عبر كل الكشوف لإمكانية المراجعة</p>
+            </div>
+          </div>
+        )}
+        <table className="ledger-table">
+          <thead>
+            <tr>
+              <th rowSpan={2}>م</th>
+              <th rowSpan={2}>التاريخ</th>
+              <th rowSpan={2}>بيان</th>
+              <th rowSpan={2}>مصروف</th>
+              <th colSpan={2}>وارد</th>
+              <th rowSpan={2}>رصيد</th>
+              {editable && <th rowSpan={2} className="print-hide"></th>}
+            </tr>
+            <tr>
+              <th>معدل</th>
+              <th>{`مبلغ (${currencySymbol(supplier.currency)})`}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sheet.rows.length ? (
+              sheet.rows.map((row) => (
+                <tr
+                  key={row.id}
+                  className={
+                    row.kind === "supply"
+                      ? "row-deposit"
+                      : row.kind === "payment"
+                        ? "row-withdrawal"
+                        : row.kind === "carry"
+                          ? "row-carry"
+                          : ""
+                  }
+                >
+                  <td>{row.kind === "carry" ? "—" : row.seq}</td>
+                  <td>{row.date}</td>
+                  <td>{row.label}</td>
+                  <td>{row.kind === "payment" ? egpMoney(-row.egpDelta) : ""}</td>
+                  <td>{row.kind === "supply" ? row.rate : ""}</td>
+                  <td>{row.kind === "supply" ? row.currencyAmount : ""}</td>
+                  <td>
+                    <b>{egpMoney(row.balanceAfter)}</b>
+                  </td>
+                  {editable && (
+                    <td className="print-hide">
+                      {(row.kind === "supply" || row.kind === "payment") && (
+                        <div className="payment-actions">
+                          <button className="edit-payment" onClick={() => onEdit?.(txById.get(row.id)!)}>
+                            تعديل
+                          </button>
+                          <button className="delete-payment" onClick={() => onDelete?.(row.id)}>
+                            حذف
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  )}
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={columnCount} className="empty">
+                  لا توجد حركات محسوبة حتى هذا التاريخ
+                </td>
+              </tr>
+            )}
+          </tbody>
+          {sheet.rows.length > 0 && (
+            <tfoot>
+              <tr className="total-row">
+                <td colSpan={3}>الإجمالي — كشف رقم {sheet.index}</td>
+                <td>{egpMoney(sheetPaid)}</td>
+                <td></td>
+                <td>{sheetForeign}</td>
+                <td className="balance-final">{egpMoney(sheetClosing)}</td>
+                {editable && <td className="print-hide"></td>}
+              </tr>
+            </tfoot>
+          )}
+        </table>
+      </div>
+
+      <div className="print-hide" style={{ marginTop: 14 }}>
+        <button className="secondary" onClick={copyAsImage} disabled={copying}>
+          {copying ? "جارٍ نسخ الحساب…" : "⧉ نسخ الحساب كصورة"}
+        </button>
+      </div>
+
+      <div className={`excel-capture-wrap ${capturing ? "visible" : ""}`}>
+        <div className="excel-capture" ref={compactRef}>
+          <table>
+            <colgroup>
+              <col style={{ width: 65 }} />
+              <col style={{ width: 170 }} />
+              <col style={{ width: 90 }} />
+              <col style={{ width: 55 }} />
+              <col style={{ width: 70 }} />
+              <col style={{ width: 90 }} />
+              <col style={{ width: 30 }} />
+            </colgroup>
+            <thead>
+              <tr>
+                <th colSpan={7}>حساب أ/ {supplier.name}</th>
+              </tr>
+              <tr>
+                <th rowSpan={2}>تاريخ</th>
+                <th rowSpan={2}>بيان</th>
+                <th rowSpan={2}>مصروف</th>
+                <th colSpan={2}>وارد</th>
+                <th rowSpan={2}>رصيد</th>
+                <th rowSpan={2}>م</th>
+              </tr>
+              <tr>
+                <th>معدل</th>
+                <th>مبلغ</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sheet.rows.map((row) => (
+                <tr key={row.id}>
+                  <td>{shortDate(row.date)}</td>
+                  <td className="excel-label">{row.label}</td>
+                  <td>{row.kind === "payment" ? plainNumber(-row.egpDelta) : ""}</td>
+                  <td>{row.kind === "supply" ? row.rate : ""}</td>
+                  <td>{row.kind === "supply" ? row.currencyAmount : ""}</td>
+                  <td>{plainNumber(row.balanceAfter)}</td>
+                  <td>{row.kind === "carry" ? "" : row.seq}</td>
+                </tr>
+              ))}
+            </tbody>
+            {sheet.rows.length > 0 && (
+              <tfoot>
+                <tr>
+                  <td></td>
+                  <td className="excel-label">الإجمالي</td>
+                  <td>{plainNumber(sheetPaid)}</td>
+                  <td></td>
+                  <td>{plainNumber(sheetForeign)}</td>
+                  <td className="excel-highlight">{plainNumber(sheetClosing)}</td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            )}
+          </table>
+        </div>
       </div>
     </div>
   );

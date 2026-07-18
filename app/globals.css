@@ -35,6 +35,21 @@
 .badge.aed{background:#e6f0f6;color:#2c6488}
 .badge.sar{background:#f5eedf;color:#9c7130}
 .total-row .balance-final{background:#fbe98c;font-weight:800}
+.ledger-table tbody tr.row-carry td{color:var(--muted);font-style:italic;background:#fafbfb}
+
+/* كشف حساب مضغوط بشكل جدول إكسل — يُستخدم فقط عند نسخ الحساب كصورة.
+   يبقى خارج الشاشة المرئية دائمًا، ويظهر لحظيًا داخل نافذة العرض أثناء الالتقاط فقط
+   لأن التصيير الصحيح للنص العربي في المكتبة يتطلب أن يكون العنصر ظاهرًا فعليًا. */
+.excel-capture-wrap{position:fixed;top:-6000px;right:0;z-index:-1}
+.excel-capture-wrap.visible{position:fixed;inset:0;top:0;right:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:#0a1e29c0}
+.excel-capture{direction:rtl;background:#fff;width:max-content;box-shadow:0 20px 60px #0006}
+.excel-capture table{border-collapse:collapse;table-layout:fixed;width:570px;min-width:0;font-family:"Segoe UI",Tahoma,Arial,sans-serif}
+.excel-capture th,.excel-capture td{border:1px solid #999;padding:4px 5px;font-size:11px;line-height:1.3;text-align:center;white-space:nowrap;overflow:hidden;color:#161616}
+.excel-capture thead tr:first-child th{font-size:14px;font-weight:800;padding:8px}
+.excel-capture thead tr:nth-child(2) th,.excel-capture thead tr:nth-child(3) th{background:#eef1f3;font-weight:700}
+.excel-capture .excel-label{text-align:right}
+.excel-capture tfoot td{font-weight:800;background:#eaf4f2}
+.excel-capture .excel-highlight{background:#ffe600}
 
 /* رابط العودة لكل الخدمات داخل الشريط الجانبي */
 .side-link{display:block;text-align:center;color:#bdd0d9;background:#ffffff10;border-radius:8px;padding:9px;font-size:12px;text-decoration:none;margin-bottom:10px}
