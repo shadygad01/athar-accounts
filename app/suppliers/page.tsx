@@ -828,16 +828,16 @@ function SupplierStatement({
           <thead>
             <tr>
               <th rowSpan={2}>م</th>
-              <th rowSpan={2}>التاريخ</th>
-              <th rowSpan={2}>بيان</th>
-              <th rowSpan={2}>مصروف</th>
-              <th colSpan={2}>وارد</th>
               <th rowSpan={2}>رصيد</th>
+              <th colSpan={2}>وارد</th>
+              <th rowSpan={2}>مصروف</th>
+              <th rowSpan={2}>بيان</th>
+              <th rowSpan={2}>تاريخ</th>
               {editable && <th rowSpan={2} className="print-hide"></th>}
             </tr>
             <tr>
-              <th>معدل</th>
               <th>{`مبلغ (${currencySymbol(supplier.currency)})`}</th>
+              <th className="rate-col">معدل</th>
             </tr>
           </thead>
           <tbody>
@@ -856,14 +856,14 @@ function SupplierStatement({
                   }
                 >
                   <td>{row.kind === "carry" ? "—" : row.seq}</td>
-                  <td>{row.date}</td>
-                  <td>{row.label}</td>
-                  <td>{row.kind === "payment" ? egpMoney(-row.egpDelta) : ""}</td>
-                  <td>{row.kind === "supply" ? row.rate : ""}</td>
-                  <td>{row.kind === "supply" ? row.currencyAmount : ""}</td>
                   <td>
                     <b>{egpMoney(row.balanceAfter)}</b>
                   </td>
+                  <td>{row.kind === "supply" ? row.currencyAmount : ""}</td>
+                  <td className="rate-col">{row.kind === "supply" ? row.rate : ""}</td>
+                  <td>{row.kind === "payment" ? egpMoney(-row.egpDelta) : ""}</td>
+                  <td>{row.label}</td>
+                  <td>{row.date}</td>
                   {editable && (
                     <td className="print-hide">
                       {(row.kind === "supply" || row.kind === "payment") && (
@@ -891,11 +891,12 @@ function SupplierStatement({
           {sheet.rows.length > 0 && (
             <tfoot>
               <tr className="total-row">
-                <td colSpan={3}>الإجمالي — كشف رقم {sheet.index}</td>
-                <td>{egpMoney(sheetPaid)}</td>
                 <td></td>
-                <td>{sheetForeign}</td>
                 <td className="balance-final">{egpMoney(sheetClosing)}</td>
+                <td>{sheetForeign}</td>
+                <td className="rate-col"></td>
+                <td>{egpMoney(sheetPaid)}</td>
+                <td colSpan={2}>الإجمالي — كشف رقم {sheet.index}</td>
                 {editable && <td className="print-hide"></td>}
               </tr>
             </tfoot>

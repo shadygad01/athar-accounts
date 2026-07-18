@@ -33,6 +33,7 @@
 .badge.sar{background:#f5eedf;color:#9c7130}
 .total-row .balance-final{background:#fbe98c;font-weight:800}
 .ledger-table tbody tr.row-carry td{color:var(--muted);font-style:italic;background:#fafbfb}
+.ledger-table th.rate-col,.ledger-table td.rate-col{width:50px;font-size:10px;color:var(--muted);font-weight:400}
 .stats.four-col{grid-template-columns:repeat(4,1fr)}
 @media(max-width:1050px){.stats.four-col{grid-template-columns:1fr 1fr}}
 
