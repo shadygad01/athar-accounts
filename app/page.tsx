@@ -19,9 +19,7 @@ export default function Home() {
   return (
     <div className="landing" dir="rtl">
       <header className="landing-head">
-        <span className="brandmark">أ</span>
         <div>
-          <span className="org-name-light">مجموعة شركات آثار للسياحة</span>
           <h1>نظام الحسابات</h1>
           <p>اختر الخدمة التي تريد العمل عليها</p>
         </div>

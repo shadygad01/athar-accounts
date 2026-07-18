@@ -228,9 +228,7 @@ export default function SuppliersPage() {
     <div className="app" dir="rtl">
       <aside className="sidebar print-hide">
         <div className="brand">
-          <span className="brandmark">أ</span>
           <div>
-            <span className="org-name">مجموعة شركات آثار للسياحة</span>
             <strong>حسابات الموردين</strong>
           </div>
         </div>
@@ -253,7 +251,6 @@ export default function SuppliersPage() {
       <main className="main">
         <header className="topbar print-hide">
           <div>
-            <span className="org-eyebrow">مجموعة شركات آثار للسياحة</span>
             <h1>{nav.find((n) => n.id === view)?.label}</h1>
             <p>حسابات الموردين بعملة الدرهم أو الريال، وسداداتهم بالجنيه المصري على دفعات</p>
           </div>
@@ -274,7 +271,7 @@ export default function SuppliersPage() {
 
         {view === "dashboard" && (
           <>
-            <section className="stats">
+            <section className="stats four-col">
               <article>
                 <span className="stat-icon blue">◉</span>
                 <div>
@@ -567,9 +564,7 @@ export default function SuppliersPage() {
               <>
                 <div className="print-title">
                   <h1>كشف حساب — حسابات الموردين</h1>
-                  <p>
-                    مجموعة شركات آثار للسياحة · تاريخ التقرير {report.asOfDate} · أُصدر بتاريخ {today()}
-                  </p>
+                  <p>تاريخ التقرير {report.asOfDate}</p>
                 </div>
                 <SupplierStatement supplier={reportSupplier} asOfDate={report.asOfDate} />
               </>

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Client,
   LedgerResult,
@@ -23,7 +23,6 @@ const seedClients: Client[] = [
   {
     id: "demo",
     name: "عميل تجريبي",
-    phone: "",
     notes: "بيانات تجريبية — يمكن حذف الحساب والبدء ببياناتك.",
     tranches: [{ id: "t1", amount: 100000, date: "2024-01-15", note: "الدفعة الأولى" }],
     withdrawals: [],
@@ -43,6 +42,7 @@ type Modal =
   | "editTranche"
   | "withdrawal"
   | "editWithdrawal"
+  | "settle"
   | "rate"
   | null;
 
@@ -82,10 +82,14 @@ export default function Home() {
   const [withdrawalClientId, setWithdrawalClientId] = useState<string>("");
   const [withdrawalDate, setWithdrawalDate] = useState<string>(today());
   const [withdrawalType, setWithdrawalType] = useState<WithdrawalType>("interest");
+  const [settleClientId, setSettleClientId] = useState<string>("");
+  const [settleDate, setSettleDate] = useState<string>(today());
 
   const [reportClientId, setReportClientId] = useState<string>("");
   const [reportDateInput, setReportDateInput] = useState<string>(today());
   const [report, setReport] = useState<{ clientId: string; asOfDate: string; result: LedgerResult } | null>(null);
+  const [printedAt, setPrintedAt] = useState<string>("");
+  const restoreFileRef = useRef<HTMLInputElement>(null);
 
   // قراءة لمرة واحدة من localStorage عند التحميل — لا يوجد عرض من الخادم لمزامنته معه،
   // فالمتصفح هو مصدر البيانات الوحيد لهذا التطبيق.
@@ -126,20 +130,59 @@ export default function Home() {
   }, [clientLedgersToday]);
 
   const totals = useMemo(() => {
-    let deposited = 0;
     let due = 0;
     let interestDue = 0;
-    let withdrawn = 0;
     clientLedgersToday.forEach((ledger) => {
-      deposited += ledger.summary.totalDeposited;
       due += ledger.summary.grandTotal;
       interestDue += ledger.summary.interestDue;
-      withdrawn += ledger.summary.totalWithdrawnPrincipal + ledger.summary.totalWithdrawnInterest;
     });
-    return { deposited, due, interestDue, withdrawn };
+    return { due, interestDue };
   }, [clientLedgersToday]);
 
   if (!ready) return <main className="loading">جارٍ تجهيز النظام…</main>;
+
+  function backupData() {
+    const blob = new Blob(
+      [JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), clients, rates }, null, 2)],
+      { type: "application/json" },
+    );
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    // يجب إلحاق الرابط بالمستند حتى يلتزم المتصفح باسم الملف المحدَّد في download
+    // بدل تسميته "download" تلقائيًا.
+    a.download = `نسخة-احتياطية-حسابات-خاصة-${today()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function restoreData(file?: File) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(String(reader.result));
+        if (!Array.isArray(data.clients)) {
+          alert("ملف غير صالح — لا يحتوي على بيانات عملاء.");
+          return;
+        }
+        if (
+          !confirm(
+            "سيتم استبدال كل البيانات الحالية (العملاء والدفعات والمسحوبات ومعدلات العائد) بالبيانات الموجودة في هذا الملف. هل تريد المتابعة؟",
+          )
+        )
+          return;
+        setClients(data.clients);
+        if (Array.isArray(data.rates)) setRates(data.rates);
+        alert("تم استرجاع البيانات بنجاح.");
+      } catch {
+        alert("تعذر قراءة الملف — تأكد أنه ملف نسخة احتياطية صحيح.");
+      }
+    };
+    reader.readAsText(file);
+  }
 
   function saveClient(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -150,7 +193,7 @@ export default function Home() {
       setClients((v) =>
         v.map((c) =>
           c.id === editingClient.id
-            ? { ...c, name, phone: String(fd.get("phone") || ""), notes: String(fd.get("notes") || "") }
+            ? { ...c, name, notes: String(fd.get("notes") || "") }
             : c,
         ),
       );
@@ -159,7 +202,6 @@ export default function Home() {
       const client: Client = {
         id: uid(),
         name,
-        phone: String(fd.get("phone") || ""),
         notes: String(fd.get("notes") || ""),
         tranches: [],
         withdrawals: [],
@@ -269,6 +311,34 @@ export default function Home() {
     );
   }
 
+  function saveSettlement(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    const clientId = String(fd.get("clientId"));
+    const date = String(fd.get("date"));
+    const note = String(fd.get("note") || "تصفية كاملة للحساب");
+    const client = clients.find((c) => c.id === clientId);
+    if (!client || !date) return;
+    const available = availableBalances(client, rates, date);
+    const principalAmount = Math.max(0, available.principalAvailable);
+    const interestAmount = Math.max(0, available.interestAvailable);
+    if (principalAmount < 0.01 && interestAmount < 0.01) {
+      alert("لا يوجد رصيد لتصفيته لهذا العميل حتى هذا التاريخ.");
+      return;
+    }
+    if (
+      !confirm(
+        `سيتم تسجيل سحب أصل المبلغ (${money(principalAmount)}) والفوائد المستحقة (${money(interestAmount)}) معًا — بإجمالي ${money(principalAmount + interestAmount)} — وسيصبح رصيد العميل صفرًا حتى هذا التاريخ. هل تريد المتابعة؟`,
+      )
+    )
+      return;
+    const newWithdrawals: Withdrawal[] = [];
+    if (principalAmount >= 0.01) newWithdrawals.push({ id: uid(), date, amount: principalAmount, type: "principal", note });
+    if (interestAmount >= 0.01) newWithdrawals.push({ id: uid(), date, amount: interestAmount, type: "interest", note });
+    setClients((v) => v.map((c) => (c.id === clientId ? { ...c, withdrawals: [...c.withdrawals, ...newWithdrawals] } : c)));
+    setModal(null);
+  }
+
   function saveRate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
@@ -299,6 +369,31 @@ export default function Home() {
     setReport({ clientId: client.id, asOfDate: reportDateInput, result });
   }
 
+  function printReport() {
+    // نُثبّت تاريخ ووقت الطباعة داخل محتوى الصفحة نفسه، لأن ترويسة/تذييل الطباعة
+    // التلقائية في المتصفح (لو أوقفها المستخدم) تختفي بالكامل ولا نتحكم فيها من الكود.
+    setPrintedAt(
+      new Date().toLocaleString("ar-EG-u-ca-gregory-nu-latn", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    );
+    // المتصفح يضيف عنوان الصفحة تلقائيًا في ترويسة الطباعة؛ نُفرغه مؤقتًا حتى لا يظهر
+    // اسم النظام والشركة أعلى كشف الحساب المطبوع، ثم نُعيده بعد انتهاء الطباعة.
+    const originalTitle = document.title;
+    document.title = "";
+    const restoreTitle = () => {
+      document.title = originalTitle;
+      window.removeEventListener("afterprint", restoreTitle);
+    };
+    window.addEventListener("afterprint", restoreTitle);
+    // تأجيل بسيط حتى يُحدَّث الـ DOM بوقت الطباعة الجديد قبل فتح نافذة الطباعة.
+    requestAnimationFrame(() => window.print());
+  }
+
   const reportClient = report ? clients.find((c) => c.id === report.clientId) : null;
   const withdrawalPreview =
     withdrawalClientId && withdrawalDate
@@ -307,14 +402,19 @@ export default function Home() {
           return c ? availableBalances(c, rates, withdrawalDate) : null;
         })()
       : null;
+  const settlePreview =
+    settleClientId && settleDate
+      ? (() => {
+          const c = clients.find((x) => x.id === settleClientId);
+          return c ? availableBalances(c, rates, settleDate) : null;
+        })()
+      : null;
 
   return (
     <div className="app" dir="rtl">
       <aside className="sidebar print-hide">
         <div className="brand">
-          <span className="brandmark">أ</span>
           <div>
-            <span className="org-name">مجموعة شركات آثار للسياحة</span>
             <strong>حسابات خاصة</strong>
             <small>متابعة عوائد العملاء ومسحوباتهم</small>
           </div>
@@ -331,6 +431,18 @@ export default function Home() {
           <Link href="/" className="side-link">
             ← كل الخدمات
           </Link>
+          <button onClick={backupData}>↓ نسخ احتياطي</button>
+          <button onClick={() => restoreFileRef.current?.click()}>↑ استعادة البيانات</button>
+          <input
+            ref={restoreFileRef}
+            type="file"
+            accept=".json"
+            hidden
+            onChange={(e) => {
+              restoreData(e.target.files?.[0]);
+              e.target.value = "";
+            }}
+          />
           <small>البيانات محفوظة على هذا الجهاز</small>
         </div>
       </aside>
@@ -338,7 +450,6 @@ export default function Home() {
       <main className="main">
         <header className="topbar print-hide">
           <div>
-            <span className="org-eyebrow">مجموعة شركات آثار للسياحة</span>
             <h1>{nav.find((n) => n.id === view)?.label}</h1>
             <p>حسابات خاصة بالعملاء وفوائدها الشهرية ومسحوباتهم</p>
           </div>
@@ -355,18 +466,30 @@ export default function Home() {
               </button>
             )}
             {view === "withdrawals" && (
-              <button
-                className="primary"
-                onClick={() => {
-                  setEditingWithdrawal(null);
-                  setWithdrawalClientId(selectedClientId || clients[0]?.id || "");
-                  setWithdrawalDate(today());
-                  setWithdrawalType("interest");
-                  setModal("withdrawal");
-                }}
-              >
-                ＋ تسجيل سحب
-              </button>
+              <>
+                <button
+                  className="secondary"
+                  onClick={() => {
+                    setSettleClientId(selectedClientId || clients[0]?.id || "");
+                    setSettleDate(today());
+                    setModal("settle");
+                  }}
+                >
+                  تصفية حساب عميل بالكامل
+                </button>
+                <button
+                  className="primary"
+                  onClick={() => {
+                    setEditingWithdrawal(null);
+                    setWithdrawalClientId(selectedClientId || clients[0]?.id || "");
+                    setWithdrawalDate(today());
+                    setWithdrawalType("interest");
+                    setModal("withdrawal");
+                  }}
+                >
+                  ＋ تسجيل سحب
+                </button>
+              </>
             )}
             {view === "rates" && (
               <button className="primary" onClick={() => setModal("rate")}>
@@ -392,14 +515,6 @@ export default function Home() {
                   <small>عدد العملاء</small>
                   <b>{clients.length}</b>
                   <em>حساب خاص نشط</em>
-                </div>
-              </article>
-              <article>
-                <span className="stat-icon green">✓</span>
-                <div>
-                  <small>إجمالي المبالغ المودعة</small>
-                  <b>{money(totals.deposited)}</b>
-                  <em>أصل جميع الدفعات</em>
                 </div>
               </article>
               <article>
@@ -531,6 +646,16 @@ export default function Home() {
                   >
                     تقرير العميل
                   </button>
+                  <button
+                    className="secondary"
+                    onClick={() => {
+                      setSettleClientId(selectedClient.id);
+                      setSettleDate(today());
+                      setModal("settle");
+                    }}
+                  >
+                    تصفية الحساب بالكامل
+                  </button>
                   <button className="danger-link" onClick={() => deleteClient(selectedClient.id)}>
                     حذف العميل
                   </button>
@@ -541,10 +666,7 @@ export default function Home() {
                       <span className="company-dot">{selectedClient.name.slice(0, 1)}</span>
                       <div>
                         <h3>{selectedClient.name}</h3>
-                        <p>
-                          {selectedClient.phone || "بدون رقم هاتف"} ·{" "}
-                          {selectedClient.notes || "بدون ملاحظات"}
-                        </p>
+                        <p>{selectedClient.notes || "بدون ملاحظات"}</p>
                       </div>
                     </div>
                   </div>
@@ -845,7 +967,7 @@ export default function Home() {
                     عرض التقرير
                   </button>
                   {report && (
-                    <button className="secondary" onClick={() => window.print()}>
+                    <button className="secondary" onClick={printReport}>
                       طباعة / حفظ PDF
                     </button>
                   )}
@@ -858,15 +980,16 @@ export default function Home() {
                 <div className="print-title">
                   <h1>كشف حساب — حسابات خاصة</h1>
                   <p>
-                    مجموعة شركات آثار للسياحة · تاريخ التقرير {report.asOfDate} · أُصدر بتاريخ {today()}
+                    تاريخ التقرير {report.asOfDate}
+                    {printedAt ? ` · تاريخ ووقت الطباعة ${printedAt}` : ""}
                   </p>
                 </div>
                 <div className="panel">
                   <div className="statement-head">
                     <div>
-                      <h2 className="client-name">{reportClient.name}</h2>
+                      <h2 className="client-name print-hide">{reportClient.name}</h2>
                       <p style={{ margin: 0, color: "var(--muted)", fontSize: 12 }}>
-                        {reportClient.phone || "بدون رقم هاتف"} · {reportClient.tranches.length} دفعة مسجلة
+                        {reportClient.tranches.length} دفعة مسجلة
                       </p>
                     </div>
                     <div className="as-of">
@@ -882,20 +1005,20 @@ export default function Home() {
                   )}
                 </div>
 
-                <div className="report-summary print-keep">
-                  <span>
+                <div className="report-summary">
+                  <span className="print-hide">
                     إجمالي المودَع <b>{money(report.result.summary.totalDeposited)}</b>
                   </span>
                   <span>
                     أصل المبلغ المتبقي <b>{money(report.result.summary.principalRemaining)}</b>
                   </span>
-                  <span>
+                  <span className="print-hide">
                     إجمالي الفوائد منذ البداية <b>{money(report.result.summary.totalInterestAccrued)}</b>
                   </span>
                   <span>
                     الفوائد المستحقة غير المسحوبة <b>{money(report.result.summary.interestDue)}</b>
                   </span>
-                  <span>
+                  <span className="print-hide">
                     إجمالي المسحوبات <b>{money(report.result.summary.totalWithdrawnPrincipal + report.result.summary.totalWithdrawnInterest)}</b>
                   </span>
                   <span>
@@ -996,10 +1119,6 @@ export default function Home() {
                 اسم العميل
                 <input name="name" required defaultValue={editingClient?.name} />
               </label>
-              <label>
-                رقم الهاتف
-                <input name="phone" defaultValue={editingClient?.phone} />
-              </label>
               <label className="wide">
                 ملاحظات
                 <input name="notes" defaultValue={editingClient?.notes} />
@@ -1095,6 +1214,53 @@ export default function Home() {
               </label>
             </div>
             <button className="primary submit">{editingWithdrawal ? "حفظ التعديلات" : "تسجيل السحب"}</button>
+          </form>
+        </Modal>
+      )}
+
+      {modal === "settle" && (
+        <Modal title="تصفية الحساب بالكامل" close={() => setModal(null)}>
+          <form className="form" onSubmit={saveSettlement}>
+            <div className="form-hint">
+              يسجّل هذا الإجراء سحب أصل المبلغ المتبقي والفوائد المستحقة معًا في عمليتين مرتبطتين، بحيث يصبح رصيد
+              العميل صفرًا حتى التاريخ المختار — يُستخدم عند تصفية استثمار العميل بالكامل.
+            </div>
+            <div className="form-grid">
+              <label className="wide">
+                العميل
+                <select name="clientId" required value={settleClientId} onChange={(e) => setSettleClientId(e.target.value)}>
+                  <option value="">اختر عميلًا</option>
+                  {clientsSorted.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                تاريخ التصفية
+                <input name="date" type="date" required value={settleDate} onChange={(e) => setSettleDate(e.target.value)} />
+              </label>
+              <label className="wide">
+                بيان / ملاحظة
+                <input name="note" defaultValue="تصفية كاملة للحساب" />
+              </label>
+            </div>
+            {settlePreview && (
+              <div className="balance-box">
+                أصل المبلغ المتاح: <b>{money(Math.max(0, settlePreview.principalAvailable))}</b>
+                {" · "}
+                الفوائد المستحقة المتاحة: <b>{money(Math.max(0, settlePreview.interestAvailable))}</b>
+                {" · "}
+                الإجمالي:{" "}
+                <b>
+                  {money(
+                    Math.max(0, settlePreview.principalAvailable) + Math.max(0, settlePreview.interestAvailable),
+                  )}
+                </b>
+              </div>
+            )}
+            <button className="primary submit">تأكيد التصفية وتصفير الحساب</button>
           </form>
         </Modal>
       )}
