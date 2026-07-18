@@ -811,7 +811,7 @@ function SupplierStatement({
   return (
     <div>
       <div ref={captureRef}>
-        <div className="statement-head print-hide">
+        <div className="statement-head supplier-statement-head print-hide">
           <div className="as-of" style={{ visibility: "hidden" }} aria-hidden="true">
             <small style={{ fontSize: 11 }}>محسوب حتى تاريخ</small>
             <b>{asOfDate}</b>
@@ -910,8 +910,7 @@ function SupplierStatement({
               </tr>
             </thead>
             <tbody>
-              {sheet.rows.length ? (
-                sheet.rows.map((row) => (
+              {sheet.rows.map((row) => (
                   <tr
                     key={row.id}
                     className={
@@ -948,14 +947,10 @@ function SupplierStatement({
                       </td>
                     )}
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={columnCount} className="empty">
-                    لا توجد حركات محسوبة حتى هذا التاريخ
-                  </td>
-                </tr>
-              )}
+                ))}
+              <tr className="trailing-empty-row" aria-hidden="true">
+                <td colSpan={columnCount}>&nbsp;</td>
+              </tr>
             </tbody>
             {sheet.rows.length > 0 && (
               <tfoot>

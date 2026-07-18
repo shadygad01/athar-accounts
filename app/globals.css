@@ -28,6 +28,7 @@
 .statement-head .as-of{text-align:right;flex:0 0 auto}
 .statement-head .as-of b{display:block;font-size:15px;color:var(--teal)}
 .statement-head .statement-title{flex:1;text-align:center}
+.supplier-statement-head{background:#f4f8f8}
 @media print{.statement-head{border-bottom:2px solid var(--navy)}}
 
 /* حسابات الموردين — شارات العملة وتمييز الرصيد الختامي */
@@ -51,6 +52,7 @@
 .supplier-ledger th,.supplier-ledger td{border-left:1px solid var(--line)}
 .supplier-ledger th:last-child,.supplier-ledger td:last-child{border-left:none}
 .supplier-ledger tbody tr.row-deposit td{background:#f2f9f6}
+.supplier-ledger tbody tr.trailing-empty-row td{background:#fff}
 
 /* وضع مضغوط مؤقت يُفعَّل فقط أثناء التقاط صورة الحساب: يقلل الحشو والفراغات فقط، دون تغيير الخط أو حجمه أو تنسيقه */
 .capturing{width:var(--capture-width,fit-content);max-width:100%;margin-inline-start:auto}
