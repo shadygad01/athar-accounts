@@ -760,8 +760,10 @@ function SupplierStatement({
 
   async function copyAsImage() {
     if (!captureRef.current) return;
+    const trailingEmptyCell = captureRef.current.querySelector<HTMLTableCellElement>(".trailing-empty-row td");
     setCopying(true);
     captureRef.current.classList.add("capturing");
+    trailingEmptyCell?.setAttribute("colspan", "7");
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
     const summary = captureRef.current.querySelector<HTMLElement>(".report-summary");
     if (summary) {
@@ -804,6 +806,7 @@ function SupplierStatement({
     } finally {
       captureRef.current?.classList.remove("capturing");
       captureRef.current?.style.removeProperty("--capture-width");
+      trailingEmptyCell?.setAttribute("colspan", String(columnCount));
       setCopying(false);
     }
   }
