@@ -12,6 +12,9 @@ export type SupplierCurrency = "AED" | "SAR";
 
 export const currencySymbol = (c: SupplierCurrency) => (c === "AED" ? "د.أ" : "ر.س");
 
+/** يسبق اسم المورد بـ"أ/" تلقائيًا أينما ظهر كعنوان حساب. */
+export const supplierTitle = (name: string) => `أ/ ${name}`;
+
 export const foreignMoney = (n: number, currency: SupplierCurrency) =>
   new Intl.NumberFormat("ar-EG", { maximumFractionDigits: 2, numberingSystem: "latn" }).format(
     Math.round((n + Number.EPSILON) * 100) / 100,
