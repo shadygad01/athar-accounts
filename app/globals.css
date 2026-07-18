@@ -53,13 +53,20 @@
 .supplier-ledger tbody tr.row-deposit td{background:#f2f9f6}
 
 /* وضع مضغوط مؤقت يُفعَّل فقط أثناء التقاط صورة الحساب: يقلل الحشو والفراغات فقط، دون تغيير الخط أو حجمه أو تنسيقه */
+.capturing{width:var(--capture-width,fit-content);max-width:100%;margin-inline-start:auto}
 .capturing .statement-head{padding:6px}
 .capturing .report-summary{gap:6px;margin:0 0 6px!important}
 .capturing .report-summary span{padding:3px 6px}
-.capturing .supplier-ledger th,.capturing .supplier-ledger td{padding:8px 13px}
+.capturing .supplier-report-table table{width:100%;max-width:100%;table-layout:fixed;margin-inline-start:0;margin-inline-end:auto}
+.capturing .supplier-ledger th,.capturing .supplier-ledger td{padding:4px 3px}
 .capturing .ledger-table th.rate-col,.capturing .ledger-table td.rate-col{padding-left:2px;padding-right:4px}
-.capturing .supplier-ledger th.balance-col,.capturing .supplier-ledger td.balance-col{padding-left:5px;padding-right:5px}
-.capturing .supplier-ledger th.expense-col,.capturing .supplier-ledger td.expense-col{padding-left:4px;padding-right:4px}
+.capturing .supplier-ledger th.balance-col,.capturing .supplier-ledger td.balance-col{width:130px;padding-left:3px;padding-right:3px}
+.capturing .supplier-ledger th.expense-col,.capturing .supplier-ledger td.expense-col{width:105px;padding-left:3px;padding-right:3px}
+.capturing .supplier-ledger th.seq-col,.capturing .supplier-ledger td.seq-col{width:32px}
+.capturing .supplier-ledger th.amount-col,.capturing .supplier-ledger td.amount-col{width:72px}
+.capturing .supplier-ledger th.rate-col,.capturing .supplier-ledger td.rate-col{width:52px}
+.capturing .supplier-ledger th.label-col,.capturing .supplier-ledger td.label-col{width:230px}
+.capturing .supplier-ledger th.date-col,.capturing .supplier-ledger td.date-col{width:100px}
 
 /* عند الطباعة: اترك الخط كما هو واضغط العرض الناتج عن الحشو والتمدد فقط.
    العرض التلقائي يمنع الجدول من تجاوز صف ملخص الرصيد عندما لا تحتاج محتوياته لكل عرض الصفحة. */

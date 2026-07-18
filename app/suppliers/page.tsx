@@ -762,6 +762,16 @@ function SupplierStatement({
     if (!captureRef.current) return;
     setCopying(true);
     captureRef.current.classList.add("capturing");
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    const summary = captureRef.current.querySelector<HTMLElement>(".report-summary");
+    if (summary) {
+      const cards = Array.from(summary.querySelectorAll<HTMLElement>("span"));
+      const gap = Number.parseFloat(getComputedStyle(summary).columnGap) || 0;
+      const summaryWidth = cards.reduce((width, card) => width + card.getBoundingClientRect().width, 0)
+        + gap * Math.max(cards.length - 1, 0);
+      captureRef.current.style.setProperty("--capture-width", `${Math.ceil(summaryWidth)}px`);
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    }
     try {
       const { toBlob } = await import("html-to-image");
       const blob = await toBlob(captureRef.current, {
@@ -784,6 +794,7 @@ function SupplierStatement({
       alert("تعذّر نسخ الحساب كصورة على هذا المتصفح.");
     } finally {
       captureRef.current?.classList.remove("capturing");
+      captureRef.current?.style.removeProperty("--capture-width");
       setCopying(false);
     }
   }
