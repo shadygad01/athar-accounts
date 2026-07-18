@@ -44,7 +44,6 @@ export type SupplierTx = {
 export type Supplier = {
   id: string;
   name: string;
-  phone?: string;
   notes?: string;
   currency: SupplierCurrency;
   openingBalance: number;
