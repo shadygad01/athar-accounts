@@ -1,10 +1,8 @@
 import type { NextConfig } from "next";
 
-// يُبنى التطبيق كموقع ثابت بالكامل (client-only، بدون سيرفر) عند التوزيع على GitHub Pages
-// أو Cloudflare Pages. على GitHub Pages يُخدَّم من مسار فرعي باسم الريبو بدلاً من الجذر،
-// أما على Cloudflare Pages (تُعرَّف CF_PAGES تلقائيًا أثناء البناء) فيُخدَّم من الجذر مباشرة.
+// يُبنى التطبيق كموقع ثابت بالكامل (client-only، بدون سيرفر) عند التوزيع على GitHub Pages،
+// حيث يُخدَّم من مسار فرعي باسم الريبو بدلاً من الجذر.
 const isGithubPages = process.env.GITHUB_PAGES === "true";
-const isCloudflarePages = process.env.CF_PAGES === "1";
 const repoName = "athar-accounts";
 
 const nextConfig: NextConfig = {
@@ -16,13 +14,7 @@ const nextConfig: NextConfig = {
         images: { unoptimized: true },
         trailingSlash: true,
       }
-    : isCloudflarePages
-      ? {
-          output: "export",
-          images: { unoptimized: true },
-          trailingSlash: true,
-        }
-      : {}),
+    : {}),
 };
 
 export default nextConfig;
