@@ -206,8 +206,8 @@ export function paginateLedger(rows: SupplierLedgerRow[], pageSize = SHEET_SIZE)
   return sheets.map((sheetRows, idx) => ({ index: idx + 1, total: sheets.length, rows: sheetRows }));
 }
 
-/** آخر معامل صرف استُخدم في توريد لهذا المورد — لتعبئته تلقائيًا كنقطة بداية عند تسجيل توريد جديد. */
+/** معامل الصرف في آخر توريد تم تسجيله لهذا المورد — لتعبئته تلقائيًا كنقطة بداية عند تسجيل توريد جديد. */
 export function lastRate(supplier: Supplier): number | null {
-  const supplies = [...supplier.transactions].filter((t) => t.type === "supply").sort((a, b) => b.date.localeCompare(a.date));
-  return supplies[0]?.rate ?? null;
+  const supplies = supplier.transactions.filter((t) => t.type === "supply");
+  return supplies.length ? (supplies[supplies.length - 1].rate ?? null) : null;
 }
