@@ -331,7 +331,15 @@ export default function SuppliersPage() {
                         return (
                           <tr key={s.id}>
                             <td>
-                              <b>{s.name}</b>
+                              <button
+                                className="text-btn"
+                                onClick={() => {
+                                  setSelectedSupplierId(s.id);
+                                  setView("suppliers");
+                                }}
+                              >
+                                <b>{s.name}</b>
+                              </button>
                             </td>
                             <td>
                               <span className={`badge ${s.currency === "AED" ? "aed" : "sar"}`}>{currencyLabel(s.currency)}</span>
