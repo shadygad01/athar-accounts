@@ -102,11 +102,13 @@ const emptyResult = (): LedgerResult => ({
   },
 });
 
+// عند تساوي التاريخ، تُعرض حركات إقفال الحساب القديم (فائدة اليوم ثم سحبها ثم سحب الأصل)
+// قبل أي دفعة جديدة في نفس اليوم، حتى يظهر تصفير الحساب أولًا ثم إثبات الدفعة الجديدة.
 const KIND_PRIORITY: Record<LedgerRow["kind"], number> = {
-  deposit: 0,
-  interest: 1,
-  "withdrawal-interest": 2,
-  "withdrawal-principal": 3,
+  interest: 0,
+  "withdrawal-interest": 1,
+  "withdrawal-principal": 2,
+  deposit: 3,
 };
 
 /** يبني كشف حساب زمني كامل لعميل حتى تاريخ معين (asOfDate)، بما يشمل الإيداعات وفوائد كل شهر والمسحوبات. */
