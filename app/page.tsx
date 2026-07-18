@@ -413,9 +413,7 @@ export default function Home() {
     <div className="app" dir="rtl">
       <aside className="sidebar print-hide">
         <div className="brand">
-          <span className="brandmark">أ</span>
           <div>
-            <span className="org-name">مجموعة شركات آثار للسياحة</span>
             <strong>حسابات خاصة</strong>
             <small>متابعة عوائد العملاء ومسحوباتهم</small>
           </div>
@@ -448,7 +446,6 @@ export default function Home() {
       <main className="main">
         <header className="topbar print-hide">
           <div>
-            <span className="org-eyebrow">مجموعة شركات آثار للسياحة</span>
             <h1>{nav.find((n) => n.id === view)?.label}</h1>
             <p>حسابات خاصة بالعملاء وفوائدها الشهرية ومسحوباتهم</p>
           </div>
