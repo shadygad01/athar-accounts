@@ -9,13 +9,10 @@ import {
   SupplierTx,
   SupplierTxType,
   buildSupplierLedger,
-  currencyLabel,
   currencySymbol,
   foreignMoney,
   lastRate,
   paginateLedger,
-  plainNumber,
-  shortDate,
 } from "@/lib/suppliers";
 
 const SUPPLIERS_KEY = "athar-suppliers-accounts-suppliers-v1";
@@ -339,7 +336,7 @@ export default function SuppliersPage() {
                               </button>
                             </td>
                             <td>
-                              <span className={`badge ${s.currency === "AED" ? "aed" : "sar"}`}>{currencyLabel(s.currency)}</span>
+                              <span className={`badge ${s.currency === "AED" ? "aed" : "sar"}`}>{currencySymbol(s.currency)}</span>
                             </td>
                             <td>{egpMoney(ledger.summary.totalSuppliedEgp)}</td>
                             <td>{egpMoney(ledger.summary.totalPaid)}</td>
@@ -387,7 +384,7 @@ export default function SuppliersPage() {
                       <div>
                         <h3>{s.name}</h3>
                         <p>
-                          {currencyLabel(s.currency)} · {s.transactions.length} حركة
+                          {currencySymbol(s.currency)} · {s.transactions.length} حركة
                         </p>
                       </div>
                       <div className="company-money">
@@ -440,7 +437,7 @@ export default function SuppliersPage() {
                       <div>
                         <h3>{selectedSupplier.name}</h3>
                         <p>
-                          {currencyLabel(selectedSupplier.currency)} · {selectedSupplier.notes || "بدون ملاحظات"}
+                          {currencySymbol(selectedSupplier.currency)} · {selectedSupplier.notes || "بدون ملاحظات"}
                         </p>
                       </div>
                     </div>
@@ -606,8 +603,8 @@ export default function SuppliersPage() {
               <label>
                 عملة المورد
                 <select name="currency" defaultValue={editingSupplier?.currency || "AED"}>
-                  <option value="AED">درهم إماراتي</option>
-                  <option value="SAR">ريال سعودي</option>
+                  <option value="AED">د.أ</option>
+                  <option value="SAR">ر.س</option>
                 </select>
               </label>
               <label>
@@ -737,9 +734,8 @@ function SupplierStatement({
   const sheets = useMemo(() => paginateLedger(ledger.rows), [ledger.rows]);
   const [sheetIndex, setSheetIndex] = useState(sheets.length - 1);
   const prevSheetCount = useRef(sheets.length);
-  const compactRef = useRef<HTMLDivElement>(null);
+  const captureRef = useRef<HTMLDivElement>(null);
   const [copying, setCopying] = useState(false);
-  const [capturing, setCapturing] = useState(false);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -756,18 +752,17 @@ function SupplierStatement({
   const sheetForeign = sheet.rows.filter((r) => r.kind === "supply").reduce((sum, r) => sum + (r.currencyAmount || 0), 0);
   const sheetClosing = sheet.rows.length ? sheet.rows[sheet.rows.length - 1].balanceAfter : supplier.openingBalance;
   const columnCount = editable ? 8 : 7;
-  const excelPadRows = Math.max(0, 3 - sheet.rows.length);
 
   async function copyAsImage() {
-    if (!compactRef.current) return;
+    if (!captureRef.current) return;
     setCopying(true);
-    setCapturing(true);
     try {
-      // النسخة الصحيحة للنص العربي تحتاج العنصر ظاهرًا فعليًا داخل نافذة العرض،
-      // لذا نُظهره لحظيًا فوق الصفحة قبل الالتقاط ثم نُخفيه فور الانتهاء.
-      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
       const { toBlob } = await import("html-to-image");
-      const blob = await toBlob(compactRef.current, { backgroundColor: "#ffffff", pixelRatio: 2 });
+      const blob = await toBlob(captureRef.current, {
+        backgroundColor: "#ffffff",
+        pixelRatio: 2,
+        filter: (node) => !(node instanceof HTMLElement && node.classList.contains("capture-hide")),
+      });
       if (!blob) return;
       try {
         await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
@@ -782,227 +777,147 @@ function SupplierStatement({
     } catch {
       alert("تعذّر نسخ الحساب كصورة على هذا المتصفح.");
     } finally {
-      setCapturing(false);
       setCopying(false);
     }
   }
 
   return (
     <div>
-      <div className="statement-head print-hide">
-        <div>
-          <h2 className="client-name">{supplier.name}</h2>
-          <p style={{ margin: 0, color: "var(--muted)", fontSize: 12 }}>{currencyLabel(supplier.currency)}</p>
+      <div ref={captureRef}>
+        <div className="statement-head print-hide">
+          <div>
+            <h2 className="client-name">{supplier.name}</h2>
+            <p style={{ margin: 0, color: "var(--muted)", fontSize: 12 }}>{currencySymbol(supplier.currency)}</p>
+          </div>
+          <div className="as-of">
+            <small style={{ color: "var(--muted)", fontSize: 11 }}>محسوب حتى تاريخ</small>
+            <b>{asOfDate}</b>
+          </div>
         </div>
-        <div className="as-of">
-          <small style={{ color: "var(--muted)", fontSize: 11 }}>محسوب حتى تاريخ</small>
-          <b>{asOfDate}</b>
+  
+        <div className="report-summary print-keep" style={{ margin: "0 0 18px" }}>
+          <span>
+            الرصيد السابق <b>{egpMoney(Math.round(supplier.openingBalance))}</b>
+          </span>
+          <span>
+            إجمالي التوريدات <b>{foreignMoney(ledger.summary.totalSuppliedForeign, supplier.currency)}</b>
+          </span>
+          <span>
+            إجمالي المسدد <b>{egpMoney(Math.round(ledger.summary.totalPaid))}</b>
+          </span>
+          <span>
+            الرصيد المستحق للمورد <b>{egpMoney(Math.round(ledger.summary.balance))}</b>
+          </span>
         </div>
-      </div>
-
-      <div className="report-summary print-keep" style={{ margin: "0 0 18px" }}>
-        <span>
-          الرصيد السابق <b>{egpMoney(Math.round(supplier.openingBalance))}</b>
-        </span>
-        <span>
-          إجمالي التوريدات <b>{egpMoney(Math.round(ledger.summary.totalSuppliedEgp))}</b>
-        </span>
-        <span>
-          إجمالي المسدد <b>{egpMoney(Math.round(ledger.summary.totalPaid))}</b>
-        </span>
-        <span>
-          الرصيد المستحق للمورد <b>{egpMoney(Math.round(ledger.summary.balance))}</b>
-        </span>
-      </div>
-
-      {sheets.length > 1 && (
-        <div className="tabs print-hide">
-          {sheets.map((s) => (
-            <button key={s.index} className={s.index === sheet.index ? "active" : ""} onClick={() => setSheetIndex(s.index - 1)}>
-              كشف رقم {s.index}
-            </button>
-          ))}
-        </div>
-      )}
-
-      <div className="panel report-table supplier-report-table">
+  
         {sheets.length > 1 && (
-          <div className="panel-head">
-            <div>
-              <h2>
-                كشف رقم {sheet.index} من {sheet.total}
-              </h2>
-              <p>أرشيف حساب {supplier.name} — الأرقام مستمرة عبر كل الكشوف لإمكانية المراجعة</p>
-            </div>
+          <div className="tabs print-hide capture-hide">
+            {sheets.map((s) => (
+              <button key={s.index} className={s.index === sheet.index ? "active" : ""} onClick={() => setSheetIndex(s.index - 1)}>
+                كشف رقم {s.index}
+              </button>
+            ))}
           </div>
         )}
-        <table className="ledger-table supplier-ledger">
-          <thead>
-            <tr>
-              <th rowSpan={2}>م</th>
-              <th rowSpan={2} className="balance-col">
-                رصيد
-              </th>
-              <th colSpan={2}>وارد</th>
-              <th rowSpan={2}>مصروف</th>
-              <th rowSpan={2}>بيان</th>
-              <th rowSpan={2}>تاريخ</th>
-              {editable && <th rowSpan={2} className="print-hide"></th>}
-            </tr>
-            <tr>
-              <th>{`مبلغ (${currencySymbol(supplier.currency)})`}</th>
-              <th className="rate-col">معدل</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sheet.rows.length ? (
-              sheet.rows.map((row) => (
-                <tr
-                  key={row.id}
-                  className={
-                    row.kind === "supply"
-                      ? "row-deposit"
-                      : row.kind === "payment"
-                        ? "row-withdrawal"
-                        : row.kind === "carry"
-                          ? "row-carry"
-                          : ""
-                  }
-                >
-                  <td>{row.kind === "carry" ? "—" : row.seq}</td>
-                  <td className="balance-col">
-                    <b>{egpMoney(Math.round(row.balanceAfter))}</b>
-                  </td>
-                  <td>{row.kind === "supply" ? Math.round(row.currencyAmount || 0) : ""}</td>
-                  <td className="rate-col">{row.kind === "supply" ? row.rate : ""}</td>
-                  <td>{row.kind === "payment" ? egpMoney(Math.round(-row.egpDelta)) : ""}</td>
-                  <td>{row.label}</td>
-                  <td>{row.date}</td>
-                  {editable && (
-                    <td className="print-hide">
-                      {(row.kind === "supply" || row.kind === "payment") && (
-                        <div className="payment-actions">
-                          <button className="edit-payment" onClick={() => onEdit?.(txById.get(row.id)!)}>
-                            تعديل
-                          </button>
-                          <button className="delete-payment" onClick={() => onDelete?.(row.id)}>
-                            حذف
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                  )}
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={columnCount} className="empty">
-                  لا توجد حركات محسوبة حتى هذا التاريخ
-                </td>
-              </tr>
-            )}
-          </tbody>
-          {sheet.rows.length > 0 && (
-            <tfoot>
-              <tr className="total-row">
-                <td></td>
-                <td className="balance-final balance-col">{egpMoney(Math.round(sheetClosing))}</td>
-                <td>{Math.round(sheetForeign)}</td>
-                <td className="rate-col"></td>
-                <td>{egpMoney(Math.round(sheetPaid))}</td>
-                <td colSpan={2}>الإجمالي — كشف رقم {sheet.index}</td>
-                {editable && <td className="print-hide"></td>}
-              </tr>
-            </tfoot>
+  
+        <div className="panel report-table supplier-report-table">
+          {sheets.length > 1 && (
+            <div className="panel-head">
+              <div>
+                <h2>
+                  كشف رقم {sheet.index} من {sheet.total}
+                </h2>
+                <p>أرشيف حساب {supplier.name} — الأرقام مستمرة عبر كل الكشوف لإمكانية المراجعة</p>
+              </div>
+            </div>
           )}
-        </table>
+          <table className="ledger-table supplier-ledger">
+            <thead>
+              <tr>
+                <th rowSpan={2}>م</th>
+                <th rowSpan={2} className="balance-col">
+                  رصيد
+                </th>
+                <th colSpan={2}>وارد</th>
+                <th rowSpan={2}>مصروف</th>
+                <th rowSpan={2}>بيان</th>
+                <th rowSpan={2}>تاريخ</th>
+                {editable && <th rowSpan={2} className="print-hide capture-hide"></th>}
+              </tr>
+              <tr>
+                <th>{`مبلغ (${currencySymbol(supplier.currency)})`}</th>
+                <th className="rate-col">معدل</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sheet.rows.length ? (
+                sheet.rows.map((row) => (
+                  <tr
+                    key={row.id}
+                    className={
+                      row.kind === "supply"
+                        ? "row-deposit"
+                        : row.kind === "payment"
+                          ? "row-withdrawal"
+                          : row.kind === "carry"
+                            ? "row-carry"
+                            : ""
+                    }
+                  >
+                    <td>{row.kind === "carry" ? "—" : row.seq}</td>
+                    <td className="balance-col">
+                      <b>{egpMoney(Math.round(row.balanceAfter))}</b>
+                    </td>
+                    <td>{row.kind === "supply" ? Math.round(row.currencyAmount || 0) : ""}</td>
+                    <td className="rate-col">{row.kind === "supply" ? row.rate : ""}</td>
+                    <td>{row.kind === "payment" ? egpMoney(Math.round(-row.egpDelta)) : ""}</td>
+                    <td>{row.label}</td>
+                    <td>{row.date}</td>
+                    {editable && (
+                      <td className="print-hide capture-hide">
+                        {(row.kind === "supply" || row.kind === "payment") && (
+                          <div className="payment-actions">
+                            <button className="edit-payment" onClick={() => onEdit?.(txById.get(row.id)!)}>
+                              تعديل
+                            </button>
+                            <button className="delete-payment" onClick={() => onDelete?.(row.id)}>
+                              حذف
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={columnCount} className="empty">
+                    لا توجد حركات محسوبة حتى هذا التاريخ
+                  </td>
+                </tr>
+              )}
+            </tbody>
+            {sheet.rows.length > 0 && (
+              <tfoot>
+                <tr className="total-row">
+                  <td></td>
+                  <td className="balance-final balance-col">{egpMoney(Math.round(sheetClosing))}</td>
+                  <td>{Math.round(sheetForeign)}</td>
+                  <td className="rate-col"></td>
+                  <td>{egpMoney(Math.round(sheetPaid))}</td>
+                  <td colSpan={2}>الإجمالي — كشف رقم {sheet.index}</td>
+                  {editable && <td className="print-hide capture-hide"></td>}
+                </tr>
+              </tfoot>
+            )}
+          </table>
+        </div>
       </div>
 
       <div className="print-hide" style={{ marginTop: 14 }}>
         <button className="secondary" onClick={copyAsImage} disabled={copying}>
           {copying ? "جارٍ نسخ الحساب…" : copied ? "✓ تم النسخ" : "⧉ نسخ الحساب كصورة"}
         </button>
-      </div>
-
-      <div className={`excel-capture-wrap ${capturing ? "visible" : ""}`}>
-        <div className="excel-capture" ref={compactRef}>
-          <table>
-            <colgroup>
-              <col style={{ width: 30 }} />
-              <col style={{ width: 95 }} />
-              <col style={{ width: 70 }} />
-              <col style={{ width: 55 }} />
-              <col style={{ width: 90 }} />
-              <col style={{ width: 170 }} />
-              <col style={{ width: 65 }} />
-            </colgroup>
-            <thead>
-              <tr>
-                <th colSpan={7}>حساب أ/ {supplier.name}</th>
-              </tr>
-              <tr>
-                <th rowSpan={2}>م</th>
-                <th rowSpan={2}>رصيد</th>
-                <th colSpan={2}>وارد</th>
-                <th rowSpan={2}>مصروف</th>
-                <th rowSpan={2}>بيان</th>
-                <th rowSpan={2}>تاريخ</th>
-              </tr>
-              <tr>
-                <th>مبلغ</th>
-                <th className="excel-rate">معدل</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sheet.rows.map((row) => (
-                <tr
-                  key={row.id}
-                  className={
-                    row.kind === "supply"
-                      ? "excel-row-supply"
-                      : row.kind === "payment"
-                        ? "excel-row-payment"
-                        : row.kind === "carry"
-                          ? "excel-row-carry"
-                          : ""
-                  }
-                >
-                  <td>{row.kind === "carry" ? "" : row.seq}</td>
-                  <td className="excel-balance">{plainNumber(row.balanceAfter)}</td>
-                  <td>{row.kind === "supply" ? row.currencyAmount : ""}</td>
-                  <td className="excel-rate">{row.kind === "supply" ? row.rate : ""}</td>
-                  <td>{row.kind === "payment" ? plainNumber(-row.egpDelta) : ""}</td>
-                  <td className="excel-label">{row.label}</td>
-                  <td>{shortDate(row.date)}</td>
-                </tr>
-              ))}
-              {Array.from({ length: excelPadRows }).map((_, i) => (
-                <tr key={`pad-${i}`} className="excel-row-pad">
-                  <td>{" "}</td>
-                  <td>{" "}</td>
-                  <td>{" "}</td>
-                  <td className="excel-rate">{" "}</td>
-                  <td>{" "}</td>
-                  <td className="excel-label">{" "}</td>
-                  <td>{" "}</td>
-                </tr>
-              ))}
-            </tbody>
-            {sheet.rows.length > 0 && (
-              <tfoot>
-                <tr>
-                  <td></td>
-                  <td className="excel-highlight">{plainNumber(sheetClosing)}</td>
-                  <td>{plainNumber(sheetForeign)}</td>
-                  <td className="excel-rate"></td>
-                  <td>{plainNumber(sheetPaid)}</td>
-                  <td className="excel-label">الإجمالي</td>
-                  <td></td>
-                </tr>
-              </tfoot>
-            )}
-          </table>
-        </div>
       </div>
     </div>
   );
