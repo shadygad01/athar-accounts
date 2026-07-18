@@ -93,6 +93,18 @@ export default function Home() {
     setNotes((currentNotes) => currentNotes.filter((note) => note.id !== id));
   };
 
+  const bringNoteToFront = (id: string) => {
+    setNotes((currentNotes) => {
+      const highestZ = currentNotes.reduce(
+        (highest, note) => Math.max(highest, note.z ?? 100),
+        100,
+      );
+      return currentNotes.map((note) =>
+        note.id === id ? { ...note, z: highestZ + 1 } : note,
+      );
+    });
+  };
+
   const startDraggingNote = (
     event: ReactPointerEvent<HTMLSpanElement>,
     note: StickyNote,
@@ -108,13 +120,7 @@ export default function Home() {
       offsetX: event.clientX - rect.left,
       offsetY: event.clientY - rect.top,
     };
-    setNotes((currentNotes) =>
-      currentNotes.map((currentNote) =>
-        currentNote.id === note.id
-          ? { ...currentNote, z: Date.now() }
-          : currentNote,
-      ),
-    );
+    bringNoteToFront(note.id);
   };
 
   const moveDraggingNote = (event: ReactPointerEvent<HTMLSpanElement>) => {
@@ -315,6 +321,7 @@ export default function Home() {
               zIndex: note.z ?? 100 + index,
               rotate: `${storedNoteRotation(note)}deg`,
             }}
+            onPointerDown={() => bringNoteToFront(note.id)}
           >
             <span
               className="sticky-tape"
