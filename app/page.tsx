@@ -42,6 +42,7 @@ type Modal =
   | "editTranche"
   | "withdrawal"
   | "editWithdrawal"
+  | "settle"
   | "rate"
   | null;
 
@@ -81,6 +82,8 @@ export default function Home() {
   const [withdrawalClientId, setWithdrawalClientId] = useState<string>("");
   const [withdrawalDate, setWithdrawalDate] = useState<string>(today());
   const [withdrawalType, setWithdrawalType] = useState<WithdrawalType>("interest");
+  const [settleClientId, setSettleClientId] = useState<string>("");
+  const [settleDate, setSettleDate] = useState<string>(today());
 
   const [reportClientId, setReportClientId] = useState<string>("");
   const [reportDateInput, setReportDateInput] = useState<string>(today());
@@ -268,6 +271,34 @@ export default function Home() {
     );
   }
 
+  function saveSettlement(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    const clientId = String(fd.get("clientId"));
+    const date = String(fd.get("date"));
+    const note = String(fd.get("note") || "تصفية كاملة للحساب");
+    const client = clients.find((c) => c.id === clientId);
+    if (!client || !date) return;
+    const available = availableBalances(client, rates, date);
+    const principalAmount = Math.max(0, available.principalAvailable);
+    const interestAmount = Math.max(0, available.interestAvailable);
+    if (principalAmount < 0.01 && interestAmount < 0.01) {
+      alert("لا يوجد رصيد لتصفيته لهذا العميل حتى هذا التاريخ.");
+      return;
+    }
+    if (
+      !confirm(
+        `سيتم تسجيل سحب أصل المبلغ (${money(principalAmount)}) والفوائد المستحقة (${money(interestAmount)}) معًا — بإجمالي ${money(principalAmount + interestAmount)} — وسيصبح رصيد العميل صفرًا حتى هذا التاريخ. هل تريد المتابعة؟`,
+      )
+    )
+      return;
+    const newWithdrawals: Withdrawal[] = [];
+    if (principalAmount >= 0.01) newWithdrawals.push({ id: uid(), date, amount: principalAmount, type: "principal", note });
+    if (interestAmount >= 0.01) newWithdrawals.push({ id: uid(), date, amount: interestAmount, type: "interest", note });
+    setClients((v) => v.map((c) => (c.id === clientId ? { ...c, withdrawals: [...c.withdrawals, ...newWithdrawals] } : c)));
+    setModal(null);
+  }
+
   function saveRate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
@@ -304,6 +335,13 @@ export default function Home() {
       ? (() => {
           const c = clients.find((x) => x.id === withdrawalClientId);
           return c ? availableBalances(c, rates, withdrawalDate) : null;
+        })()
+      : null;
+  const settlePreview =
+    settleClientId && settleDate
+      ? (() => {
+          const c = clients.find((x) => x.id === settleClientId);
+          return c ? availableBalances(c, rates, settleDate) : null;
         })()
       : null;
 
@@ -351,18 +389,30 @@ export default function Home() {
               </button>
             )}
             {view === "withdrawals" && (
-              <button
-                className="primary"
-                onClick={() => {
-                  setEditingWithdrawal(null);
-                  setWithdrawalClientId(selectedClientId || clients[0]?.id || "");
-                  setWithdrawalDate(today());
-                  setWithdrawalType("interest");
-                  setModal("withdrawal");
-                }}
-              >
-                ＋ تسجيل سحب
-              </button>
+              <>
+                <button
+                  className="secondary"
+                  onClick={() => {
+                    setSettleClientId(selectedClientId || clients[0]?.id || "");
+                    setSettleDate(today());
+                    setModal("settle");
+                  }}
+                >
+                  تصفية حساب عميل بالكامل
+                </button>
+                <button
+                  className="primary"
+                  onClick={() => {
+                    setEditingWithdrawal(null);
+                    setWithdrawalClientId(selectedClientId || clients[0]?.id || "");
+                    setWithdrawalDate(today());
+                    setWithdrawalType("interest");
+                    setModal("withdrawal");
+                  }}
+                >
+                  ＋ تسجيل سحب
+                </button>
+              </>
             )}
             {view === "rates" && (
               <button className="primary" onClick={() => setModal("rate")}>
@@ -526,6 +576,16 @@ export default function Home() {
                     }}
                   >
                     تقرير العميل
+                  </button>
+                  <button
+                    className="secondary"
+                    onClick={() => {
+                      setSettleClientId(selectedClient.id);
+                      setSettleDate(today());
+                      setModal("settle");
+                    }}
+                  >
+                    تصفية الحساب بالكامل
                   </button>
                   <button className="danger-link" onClick={() => deleteClient(selectedClient.id)}>
                     حذف العميل
@@ -1091,6 +1151,53 @@ export default function Home() {
               </label>
             </div>
             <button className="primary submit">{editingWithdrawal ? "حفظ التعديلات" : "تسجيل السحب"}</button>
+          </form>
+        </Modal>
+      )}
+
+      {modal === "settle" && (
+        <Modal title="تصفية الحساب بالكامل" close={() => setModal(null)}>
+          <form className="form" onSubmit={saveSettlement}>
+            <div className="form-hint">
+              يسجّل هذا الإجراء سحب أصل المبلغ المتبقي والفوائد المستحقة معًا في عمليتين مرتبطتين، بحيث يصبح رصيد
+              العميل صفرًا حتى التاريخ المختار — يُستخدم عند تصفية استثمار العميل بالكامل.
+            </div>
+            <div className="form-grid">
+              <label className="wide">
+                العميل
+                <select name="clientId" required value={settleClientId} onChange={(e) => setSettleClientId(e.target.value)}>
+                  <option value="">اختر عميلًا</option>
+                  {clientsSorted.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                تاريخ التصفية
+                <input name="date" type="date" required value={settleDate} onChange={(e) => setSettleDate(e.target.value)} />
+              </label>
+              <label className="wide">
+                بيان / ملاحظة
+                <input name="note" defaultValue="تصفية كاملة للحساب" />
+              </label>
+            </div>
+            {settlePreview && (
+              <div className="balance-box">
+                أصل المبلغ المتاح: <b>{money(Math.max(0, settlePreview.principalAvailable))}</b>
+                {" · "}
+                الفوائد المستحقة المتاحة: <b>{money(Math.max(0, settlePreview.interestAvailable))}</b>
+                {" · "}
+                الإجمالي:{" "}
+                <b>
+                  {money(
+                    Math.max(0, settlePreview.principalAvailable) + Math.max(0, settlePreview.interestAvailable),
+                  )}
+                </b>
+              </div>
+            )}
+            <button className="primary submit">تأكيد التصفية وتصفير الحساب</button>
           </form>
         </Modal>
       )}
