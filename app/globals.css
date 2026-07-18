@@ -48,6 +48,8 @@
 .excel-capture thead tr:nth-child(2) th,.excel-capture thead tr:nth-child(3) th{background:#e6f2f1;color:var(--navy);font-weight:800}
 .excel-capture .excel-label{text-align:right}
 .excel-capture .excel-balance{font-weight:800;color:var(--teal)}
+.excel-capture thead tr:nth-child(3) th.excel-rate{color:#7c9491;font-weight:600}
+.excel-capture td.excel-rate{font-size:10px;color:var(--muted);font-weight:400}
 .excel-capture tbody tr.excel-row-supply td{background:#f2f9f7}
 .excel-capture tbody tr.excel-row-payment td{background:#fdf2f2}
 .excel-capture tbody tr.excel-row-carry td{background:#fafbfb;color:var(--muted);font-style:italic}

@@ -915,8 +915,8 @@ function SupplierStatement({
             <colgroup>
               <col style={{ width: 30 }} />
               <col style={{ width: 95 }} />
-              <col style={{ width: 55 }} />
               <col style={{ width: 70 }} />
+              <col style={{ width: 55 }} />
               <col style={{ width: 90 }} />
               <col style={{ width: 170 }} />
               <col style={{ width: 65 }} />
@@ -934,8 +934,8 @@ function SupplierStatement({
                 <th rowSpan={2}>تاريخ</th>
               </tr>
               <tr>
-                <th>معدل</th>
                 <th>مبلغ</th>
+                <th className="excel-rate">معدل</th>
               </tr>
             </thead>
             <tbody>
@@ -954,8 +954,8 @@ function SupplierStatement({
                 >
                   <td>{row.kind === "carry" ? "" : row.seq}</td>
                   <td className="excel-balance">{plainNumber(row.balanceAfter)}</td>
-                  <td>{row.kind === "supply" ? row.rate : ""}</td>
                   <td>{row.kind === "supply" ? row.currencyAmount : ""}</td>
+                  <td className="excel-rate">{row.kind === "supply" ? row.rate : ""}</td>
                   <td>{row.kind === "payment" ? plainNumber(-row.egpDelta) : ""}</td>
                   <td className="excel-label">{row.label}</td>
                   <td>{shortDate(row.date)}</td>
@@ -967,8 +967,8 @@ function SupplierStatement({
                 <tr>
                   <td></td>
                   <td className="excel-highlight">{plainNumber(sheetClosing)}</td>
-                  <td></td>
                   <td>{plainNumber(sheetForeign)}</td>
+                  <td className="excel-rate"></td>
                   <td>{plainNumber(sheetPaid)}</td>
                   <td className="excel-label">الإجمالي</td>
                   <td></td>
