@@ -39,6 +39,11 @@ const storedNoteRotation = (note: StickyNote) => {
   return ((hash % 37) - 18) / 10;
 };
 
+const normalizeNoteLayers = (notes: StickyNote[]) =>
+  [...notes]
+    .sort((first, second) => (first.z ?? 0) - (second.z ?? 0))
+    .map((note, index) => ({ ...note, z: 100 + index }));
+
 export default function Home() {
   const [notes, setNotes] = useState<StickyNote[]>([]);
   const [noteText, setNoteText] = useState("");
@@ -54,7 +59,11 @@ export default function Home() {
     queueMicrotask(() => {
       try {
         const storedNotes = localStorage.getItem(NOTES_STORAGE_KEY);
-        if (storedNotes) setNotes(JSON.parse(storedNotes) as StickyNote[]);
+        if (storedNotes) {
+          setNotes(
+            normalizeNoteLayers(JSON.parse(storedNotes) as StickyNote[]),
+          );
+        }
       } catch {
         localStorage.removeItem(NOTES_STORAGE_KEY);
       } finally {
@@ -81,7 +90,7 @@ export default function Home() {
         createdAt: new Date().toISOString(),
         x: 24 + (currentNotes.length % 4) * 34,
         y: Math.max(16, 150 + (currentNotes.length % 4) * 28),
-        z: Date.now(),
+        z: 100 + currentNotes.length,
         rotation: Number((Math.random() * 3.6 - 1.8).toFixed(1)),
       },
       ...currentNotes,
@@ -95,13 +104,12 @@ export default function Home() {
 
   const bringNoteToFront = (id: string) => {
     setNotes((currentNotes) => {
-      const highestZ = currentNotes.reduce(
-        (highest, note) => Math.max(highest, note.z ?? 100),
-        100,
-      );
-      return currentNotes.map((note) =>
-        note.id === id ? { ...note, z: highestZ + 1 } : note,
-      );
+      const selectedNote = currentNotes.find((note) => note.id === id);
+      if (!selectedNote) return currentNotes;
+      return normalizeNoteLayers([
+        ...currentNotes.filter((note) => note.id !== id),
+        selectedNote,
+      ]);
     });
   };
 
