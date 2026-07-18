@@ -621,7 +621,16 @@ export default function SuppliersPage() {
             <div className="form-grid">
               <label>
                 نوع الحركة
-                <select value={txType} onChange={(e) => setTxType(e.target.value as SupplierTxType)}>
+                <select
+                  value={txType}
+                  onChange={(e) => {
+                    const nextType = e.target.value as SupplierTxType;
+                    setTxType(nextType);
+                    if (nextType === "supply" && !editingTx && !txRateInput) {
+                      setTxRateInput(String(lastRate(txSupplier) ?? ""));
+                    }
+                  }}
+                >
                   <option value="supply">توريد (وارد بعملة المورد)</option>
                   <option value="payment">سداد (مصروف بالجنيه المصري)</option>
                 </select>
@@ -718,6 +727,7 @@ function SupplierStatement({
   const compactRef = useRef<HTMLDivElement>(null);
   const [copying, setCopying] = useState(false);
   const [capturing, setCapturing] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (sheets.length !== prevSheetCount.current) {
@@ -747,7 +757,8 @@ function SupplierStatement({
       if (!blob) return;
       try {
         await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
-        alert("تم نسخ كشف الحساب كصورة، يمكنك لصقه الآن.");
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
       } catch {
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
@@ -894,7 +905,7 @@ function SupplierStatement({
 
       <div className="print-hide" style={{ marginTop: 14 }}>
         <button className="secondary" onClick={copyAsImage} disabled={copying}>
-          {copying ? "جارٍ نسخ الحساب…" : "⧉ نسخ الحساب كصورة"}
+          {copying ? "جارٍ نسخ الحساب…" : copied ? "✓ تم النسخ" : "⧉ نسخ الحساب كصورة"}
         </button>
       </div>
 
@@ -902,25 +913,25 @@ function SupplierStatement({
         <div className="excel-capture" ref={compactRef}>
           <table>
             <colgroup>
-              <col style={{ width: 65 }} />
-              <col style={{ width: 170 }} />
-              <col style={{ width: 90 }} />
+              <col style={{ width: 30 }} />
+              <col style={{ width: 95 }} />
               <col style={{ width: 55 }} />
               <col style={{ width: 70 }} />
               <col style={{ width: 90 }} />
-              <col style={{ width: 30 }} />
+              <col style={{ width: 170 }} />
+              <col style={{ width: 65 }} />
             </colgroup>
             <thead>
               <tr>
                 <th colSpan={7}>حساب أ/ {supplier.name}</th>
               </tr>
               <tr>
-                <th rowSpan={2}>تاريخ</th>
-                <th rowSpan={2}>بيان</th>
-                <th rowSpan={2}>مصروف</th>
-                <th colSpan={2}>وارد</th>
-                <th rowSpan={2}>رصيد</th>
                 <th rowSpan={2}>م</th>
+                <th rowSpan={2}>رصيد</th>
+                <th colSpan={2}>وارد</th>
+                <th rowSpan={2}>مصروف</th>
+                <th rowSpan={2}>بيان</th>
+                <th rowSpan={2}>تاريخ</th>
               </tr>
               <tr>
                 <th>معدل</th>
@@ -929,14 +940,25 @@ function SupplierStatement({
             </thead>
             <tbody>
               {sheet.rows.map((row) => (
-                <tr key={row.id}>
-                  <td>{shortDate(row.date)}</td>
-                  <td className="excel-label">{row.label}</td>
-                  <td>{row.kind === "payment" ? plainNumber(-row.egpDelta) : ""}</td>
+                <tr
+                  key={row.id}
+                  className={
+                    row.kind === "supply"
+                      ? "excel-row-supply"
+                      : row.kind === "payment"
+                        ? "excel-row-payment"
+                        : row.kind === "carry"
+                          ? "excel-row-carry"
+                          : ""
+                  }
+                >
+                  <td>{row.kind === "carry" ? "" : row.seq}</td>
+                  <td className="excel-balance">{plainNumber(row.balanceAfter)}</td>
                   <td>{row.kind === "supply" ? row.rate : ""}</td>
                   <td>{row.kind === "supply" ? row.currencyAmount : ""}</td>
-                  <td>{plainNumber(row.balanceAfter)}</td>
-                  <td>{row.kind === "carry" ? "" : row.seq}</td>
+                  <td>{row.kind === "payment" ? plainNumber(-row.egpDelta) : ""}</td>
+                  <td className="excel-label">{row.label}</td>
+                  <td>{shortDate(row.date)}</td>
                 </tr>
               ))}
             </tbody>
@@ -944,11 +966,11 @@ function SupplierStatement({
               <tfoot>
                 <tr>
                   <td></td>
-                  <td className="excel-label">الإجمالي</td>
-                  <td>{plainNumber(sheetPaid)}</td>
+                  <td className="excel-highlight">{plainNumber(sheetClosing)}</td>
                   <td></td>
                   <td>{plainNumber(sheetForeign)}</td>
-                  <td className="excel-highlight">{plainNumber(sheetClosing)}</td>
+                  <td>{plainNumber(sheetPaid)}</td>
+                  <td className="excel-label">الإجمالي</td>
                   <td></td>
                 </tr>
               </tfoot>
