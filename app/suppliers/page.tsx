@@ -13,6 +13,7 @@ import {
   foreignMoney,
   lastRate,
   paginateLedger,
+  supplierTitle,
 } from "@/lib/suppliers";
 
 const SUPPLIERS_KEY = "athar-suppliers-accounts-suppliers-v1";
@@ -435,7 +436,7 @@ export default function SuppliersPage() {
                     <div>
                       <span className="company-dot">{selectedSupplier.name.slice(0, 1)}</span>
                       <div>
-                        <h3>{selectedSupplier.name}</h3>
+                        <h3>{supplierTitle(selectedSupplier.name)}</h3>
                         <p>
                           {currencySymbol(selectedSupplier.currency)} · {selectedSupplier.notes || "بدون ملاحظات"}
                         </p>
@@ -500,7 +501,15 @@ export default function SuppliersPage() {
                     allTransactions.map((t) => (
                       <tr key={t.id}>
                         <td>
-                          <b>{t.supplierName}</b>
+                          <button
+                            className="text-btn"
+                            onClick={() => {
+                              setSelectedSupplierId(t.supplierId);
+                              setView("suppliers");
+                            }}
+                          >
+                            <b>{t.supplierName}</b>
+                          </button>
                         </td>
                         <td>{t.date}</td>
                         <td>
@@ -786,7 +795,7 @@ function SupplierStatement({
       <div ref={captureRef}>
         <div className="statement-head print-hide">
           <div>
-            <h2 className="client-name">{supplier.name}</h2>
+            <h2 className="client-name">{supplierTitle(supplier.name)}</h2>
             <p style={{ margin: 0, color: "var(--muted)", fontSize: 12 }}>{currencySymbol(supplier.currency)}</p>
           </div>
           <div className="as-of">
@@ -839,8 +848,12 @@ function SupplierStatement({
                   رصيد
                 </th>
                 <th colSpan={2}>وارد</th>
-                <th rowSpan={2}>مصروف</th>
-                <th rowSpan={2}>بيان</th>
+                <th rowSpan={2} className="expense-col">
+                  مصروف
+                </th>
+                <th rowSpan={2} className="label-col">
+                  بيان
+                </th>
                 <th rowSpan={2}>تاريخ</th>
                 {editable && <th rowSpan={2} className="print-hide capture-hide"></th>}
               </tr>
@@ -870,8 +883,8 @@ function SupplierStatement({
                     </td>
                     <td>{row.kind === "supply" ? Math.round(row.currencyAmount || 0) : ""}</td>
                     <td className="rate-col">{row.kind === "supply" ? row.rate : ""}</td>
-                    <td>{row.kind === "payment" ? egpMoney(Math.round(-row.egpDelta)) : ""}</td>
-                    <td>{row.label}</td>
+                    <td className="expense-col">{row.kind === "payment" ? egpMoney(Math.round(-row.egpDelta)) : ""}</td>
+                    <td className="label-col">{row.label}</td>
                     <td>{row.date}</td>
                     {editable && (
                       <td className="print-hide capture-hide">
@@ -904,7 +917,7 @@ function SupplierStatement({
                   <td className="balance-final balance-col">{egpMoney(Math.round(sheetClosing))}</td>
                   <td>{Math.round(sheetForeign)}</td>
                   <td className="rate-col"></td>
-                  <td>{egpMoney(Math.round(sheetPaid))}</td>
+                  <td className="expense-col">{egpMoney(Math.round(sheetPaid))}</td>
                   <td colSpan={2}>الإجمالي — كشف رقم {sheet.index}</td>
                   {editable && <td className="print-hide capture-hide"></td>}
                 </tr>
