@@ -34,14 +34,18 @@
 .badge.sar{background:#f5eedf;color:#9c7130}
 .total-row .balance-final{background:#fbe98c;font-weight:800}
 .ledger-table tbody tr.row-carry td{color:var(--muted);font-style:italic;background:#fafbfb}
-.ledger-table th.rate-col,.ledger-table td.rate-col{width:50px;font-size:11px;color:var(--muted);font-weight:400;text-align:right;padding-left:4px;padding-right:6px}
+.ledger-table th.rate-col,.ledger-table td.rate-col{width:60px;font-size:11px;color:var(--muted);font-weight:400;text-align:right;padding-left:4px;padding-right:6px}
 .supplier-report-table{overflow:visible}
 .supplier-report-table table{min-width:0;width:100%;table-layout:auto}
 .supplier-ledger th,.supplier-ledger td{font-size:14px;color:var(--ink);font-weight:500}
 .supplier-ledger thead th{background:#eaf3f2;color:var(--navy);font-weight:700}
-.supplier-ledger th.balance-col,.supplier-ledger td.balance-col{width:135px;padding-left:8px;padding-right:8px}
-.supplier-ledger th.expense-col,.supplier-ledger td.expense-col{width:98px;padding-left:6px;padding-right:6px;white-space:nowrap}
-.supplier-ledger th.label-col,.supplier-ledger td.label-col{width:260px}
+/* نسب مساحات أعمدة كشف حساب المورد: مصروف = وارد (مبلغ+معدل)، رصيد = 1.3×مصروف، معدل = 1.5×م، بيان = 2×مصروف، تاريخ = مصروف */
+.supplier-ledger th.seq-col,.supplier-ledger td.seq-col{width:40px}
+.supplier-ledger th.amount-col,.supplier-ledger td.amount-col{width:80px}
+.supplier-ledger th.balance-col,.supplier-ledger td.balance-col{width:182px;padding-left:8px;padding-right:8px}
+.supplier-ledger th.expense-col,.supplier-ledger td.expense-col{width:140px;padding-left:6px;padding-right:6px;white-space:nowrap}
+.supplier-ledger th.label-col,.supplier-ledger td.label-col{width:280px}
+.supplier-ledger th.date-col,.supplier-ledger td.date-col{width:140px}
 .supplier-ledger th,.supplier-ledger td{border-left:1px solid var(--line)}
 .supplier-ledger th:last-child,.supplier-ledger td:last-child{border-left:none}
 .supplier-ledger tbody tr.row-deposit td{background:#f2f9f6}
