@@ -44,16 +44,14 @@
 .supplier-ledger th.label-col,.supplier-ledger td.label-col{width:260px}
 .supplier-ledger tbody tr.row-deposit td{background:#f2f9f6}
 
-/* وضع مضغوط مؤقت يُفعَّل فقط أثناء التقاط صورة الحساب لتقليل مساحة الجدول الإجمالية دون التأثير على العرض الحي */
-.capturing .statement-head{padding:14px}
-.capturing .client-name{font-size:16px}
-.capturing .report-summary{gap:12px}
-.capturing .report-summary span{padding:10px 14px}
-.capturing .supplier-ledger th,.capturing .supplier-ledger td{padding:7px 12px;font-size:11px}
-.capturing .ledger-table th.rate-col,.capturing .ledger-table td.rate-col{font-size:9px;padding-left:2px;padding-right:4px}
-.capturing .supplier-ledger th.balance-col,.capturing .supplier-ledger td.balance-col{width:110px;padding-left:6px;padding-right:6px}
-.capturing .supplier-ledger th.expense-col,.capturing .supplier-ledger td.expense-col{width:80px;padding-left:5px;padding-right:5px}
-.capturing .supplier-ledger th.label-col,.capturing .supplier-ledger td.label-col{width:210px}
+/* وضع مضغوط مؤقت يُفعَّل فقط أثناء التقاط صورة الحساب: يقلل الحشو والفراغات فقط، دون تغيير الخط أو حجمه أو تنسيقه */
+.capturing .statement-head{padding:6px}
+.capturing .report-summary{gap:6px;margin:0 0 6px!important}
+.capturing .report-summary span{padding:3px 6px}
+.capturing .supplier-ledger th,.capturing .supplier-ledger td{padding:8px 13px}
+.capturing .ledger-table th.rate-col,.capturing .ledger-table td.rate-col{padding-left:2px;padding-right:4px}
+.capturing .supplier-ledger th.balance-col,.capturing .supplier-ledger td.balance-col{padding-left:5px;padding-right:5px}
+.capturing .supplier-ledger th.expense-col,.capturing .supplier-ledger td.expense-col{padding-left:4px;padding-right:4px}
 .supplier-ledger tbody tr.row-withdrawal td{background:#fdf3f3}
 .stats.four-col{grid-template-columns:repeat(4,1fr)}
 @media(max-width:1050px){.stats.four-col{grid-template-columns:1fr 1fr}}
