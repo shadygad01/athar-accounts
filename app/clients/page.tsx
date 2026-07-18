@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Client,
   LedgerResult,
@@ -89,7 +89,6 @@ export default function Home() {
   const [reportDateInput, setReportDateInput] = useState<string>(today());
   const [report, setReport] = useState<{ clientId: string; asOfDate: string; result: LedgerResult } | null>(null);
   const [printedAt, setPrintedAt] = useState<string>("");
-  const restoreFileRef = useRef<HTMLInputElement>(null);
 
   // قراءة لمرة واحدة من localStorage عند التحميل — لا يوجد عرض من الخادم لمزامنته معه،
   // فالمتصفح هو مصدر البيانات الوحيد لهذا التطبيق.
@@ -140,49 +139,6 @@ export default function Home() {
   }, [clientLedgersToday]);
 
   if (!ready) return <main className="loading">جارٍ تجهيز النظام…</main>;
-
-  function backupData() {
-    const blob = new Blob(
-      [JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), clients, rates }, null, 2)],
-      { type: "application/json" },
-    );
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    // يجب إلحاق الرابط بالمستند حتى يلتزم المتصفح باسم الملف المحدَّد في download
-    // بدل تسميته "download" تلقائيًا.
-    a.download = `نسخة-احتياطية-حسابات-خاصة-${today()}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
-
-  function restoreData(file?: File) {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const data = JSON.parse(String(reader.result));
-        if (!Array.isArray(data.clients)) {
-          alert("ملف غير صالح — لا يحتوي على بيانات عملاء.");
-          return;
-        }
-        if (
-          !confirm(
-            "سيتم استبدال كل البيانات الحالية (العملاء والدفعات والمسحوبات ومعدلات العائد) بالبيانات الموجودة في هذا الملف. هل تريد المتابعة؟",
-          )
-        )
-          return;
-        setClients(data.clients);
-        if (Array.isArray(data.rates)) setRates(data.rates);
-        alert("تم استرجاع البيانات بنجاح.");
-      } catch {
-        alert("تعذر قراءة الملف — تأكد أنه ملف نسخة احتياطية صحيح.");
-      }
-    };
-    reader.readAsText(file);
-  }
 
   function saveClient(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -431,18 +387,6 @@ export default function Home() {
           <Link href="/" className="side-link">
             ← كل الخدمات
           </Link>
-          <button onClick={backupData}>↓ نسخ احتياطي</button>
-          <button onClick={() => restoreFileRef.current?.click()}>↑ استعادة البيانات</button>
-          <input
-            ref={restoreFileRef}
-            type="file"
-            accept=".json"
-            hidden
-            onChange={(e) => {
-              restoreData(e.target.files?.[0]);
-              e.target.value = "";
-            }}
-          />
           <small>البيانات محفوظة على هذا الجهاز</small>
         </div>
       </aside>

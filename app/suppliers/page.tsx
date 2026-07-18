@@ -96,6 +96,24 @@ export default function SuppliersPage() {
     return { supplied, paid, balance };
   }, [ledgersToday]);
 
+  const todayTotals = useMemo(() => {
+    const currentDate = today();
+    return suppliers.reduce(
+      (totalsForDay, supplier) => {
+        supplier.transactions.forEach((transaction) => {
+          if (transaction.date !== currentDate) return;
+          if (transaction.type === "supply") {
+            totalsForDay.supplied += transaction.amount * (transaction.rate || 0);
+          } else {
+            totalsForDay.paid += transaction.amount;
+          }
+        });
+        return totalsForDay;
+      },
+      { supplied: 0, paid: 0 },
+    );
+  }, [suppliers]);
+
   if (!ready) return <main className="loading">جارٍ تجهيز النظام…</main>;
 
   function saveSupplier(e: React.FormEvent<HTMLFormElement>) {
@@ -278,17 +296,17 @@ export default function SuppliersPage() {
               <article>
                 <span className="stat-icon green">✓</span>
                 <div>
-                  <small>إجمالي التوريدات</small>
-                  <b>{egpMoney(totals.supplied)}</b>
-                  <em>بالجنيه المصري حتى اليوم</em>
+                  <small>إجمالي التوريدات اليوم</small>
+                  <b>{egpMoney(todayTotals.supplied)}</b>
+                  <em>بالجنيه المصري بتاريخ {today()}</em>
                 </div>
               </article>
               <article>
                 <span className="stat-icon gold">٪</span>
                 <div>
-                  <small>إجمالي المسدد للموردين</small>
-                  <b>{egpMoney(totals.paid)}</b>
-                  <em>حتى تاريخ اليوم</em>
+                  <small>إجمالي المسدد للموردين اليوم</small>
+                  <b>{egpMoney(todayTotals.paid)}</b>
+                  <em>بالجنيه المصري بتاريخ {today()}</em>
                 </div>
               </article>
               <article>
@@ -762,21 +780,25 @@ function SupplierStatement({
     if (!captureRef.current) return;
     const trailingEmptyCell = captureRef.current.querySelector<HTMLTableCellElement>(".trailing-empty-row td");
     setCopying(true);
-    captureRef.current.classList.add("capturing");
+    captureRef.current.classList.add("capturing", "capture-side-margins");
     trailingEmptyCell?.setAttribute("colspan", "7");
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
     const summary = captureRef.current.querySelector<HTMLElement>(".report-summary");
     if (summary) {
       const cards = Array.from(summary.querySelectorAll<HTMLElement>("span"));
       const gap = Number.parseFloat(getComputedStyle(summary).columnGap) || 0;
+      const captureStyle = getComputedStyle(captureRef.current);
+      const horizontalPadding =
+        (Number.parseFloat(captureStyle.paddingInlineStart) || 0)
+        + (Number.parseFloat(captureStyle.paddingInlineEnd) || 0);
       const summaryWidth = cards.reduce((width, card) => width + card.getBoundingClientRect().width, 0)
         + gap * Math.max(cards.length - 1, 0);
-      let captureWidth = Math.ceil(summaryWidth);
+      let captureWidth = Math.ceil(summaryWidth + horizontalPadding);
       captureRef.current.style.setProperty("--capture-width", `${captureWidth}px`);
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       const tableWidth = Math.ceil(
         captureRef.current.querySelector<HTMLElement>(".supplier-ledger")?.getBoundingClientRect().width || 0,
-      );
+      ) + horizontalPadding;
       if (tableWidth > captureWidth) {
         captureWidth = tableWidth;
         captureRef.current.style.setProperty("--capture-width", `${captureWidth}px`);
@@ -804,7 +826,7 @@ function SupplierStatement({
     } catch {
       alert("تعذّر نسخ الحساب كصورة على هذا المتصفح.");
     } finally {
-      captureRef.current?.classList.remove("capturing");
+      captureRef.current?.classList.remove("capturing", "capture-side-margins");
       captureRef.current?.style.removeProperty("--capture-width");
       trailingEmptyCell?.setAttribute("colspan", String(columnCount));
       setCopying(false);
