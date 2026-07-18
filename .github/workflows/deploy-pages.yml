@@ -1,8 +1,9 @@
 name: Deploy to GitHub Pages
 
+# تعطيل النشر التلقائي على GitHub Pages (رابط عام بدون حماية).
+# التشغيل بقى يدوي فقط (workflow_dispatch) لو احتجت الرابط القديم مؤقتًا.
+# الاستضافة الحالية بقت على Cloudflare Pages خلف Cloudflare Access.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
