@@ -67,6 +67,15 @@
 .capturing .supplier-ledger th.rate-col,.capturing .supplier-ledger td.rate-col{width:52px}
 .capturing .supplier-ledger th.label-col,.capturing .supplier-ledger td.label-col{width:230px}
 .capturing .supplier-ledger th.date-col,.capturing .supplier-ledger td.date-col{width:100px}
+.capturing .supplier-ledger col.seq-col{width:32px}
+.capturing .supplier-ledger col.balance-col{width:130px}
+.capturing .supplier-ledger col.amount-col{width:72px}
+.capturing .supplier-ledger col.rate-col{width:52px}
+.capturing .supplier-ledger col.expense-col{width:105px}
+.capturing .supplier-ledger col.label-col{width:230px}
+.capturing .supplier-ledger col.date-col{width:100px}
+.supplier-ledger .column-sizer{height:0;visibility:collapse}
+.supplier-ledger .column-sizer th{height:0;padding:0!important;border:0!important}
 
 /* عند الطباعة: اترك الخط كما هو واضغط العرض الناتج عن الحشو والتمدد فقط.
    العرض التلقائي يمنع الجدول من تجاوز صف ملخص الرصيد عندما لا تحتاج محتوياته لكل عرض الصفحة. */

@@ -769,8 +769,17 @@ function SupplierStatement({
       const gap = Number.parseFloat(getComputedStyle(summary).columnGap) || 0;
       const summaryWidth = cards.reduce((width, card) => width + card.getBoundingClientRect().width, 0)
         + gap * Math.max(cards.length - 1, 0);
-      captureRef.current.style.setProperty("--capture-width", `${Math.ceil(summaryWidth)}px`);
+      let captureWidth = Math.ceil(summaryWidth);
+      captureRef.current.style.setProperty("--capture-width", `${captureWidth}px`);
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      const tableWidth = Math.ceil(
+        captureRef.current.querySelector<HTMLElement>(".supplier-ledger")?.getBoundingClientRect().width || 0,
+      );
+      if (tableWidth > captureWidth) {
+        captureWidth = tableWidth;
+        captureRef.current.style.setProperty("--capture-width", `${captureWidth}px`);
+        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      }
     }
     try {
       const { toBlob } = await import("html-to-image");
@@ -853,7 +862,27 @@ function SupplierStatement({
             </div>
           )}
           <table className="ledger-table supplier-ledger">
+            <colgroup>
+              <col className="seq-col" />
+              <col className="balance-col" />
+              <col className="amount-col" />
+              <col className="rate-col" />
+              <col className="expense-col" />
+              <col className="label-col" />
+              <col className="date-col" />
+              {editable && <col className="action-col print-hide capture-hide" />}
+            </colgroup>
             <thead>
+              <tr className="column-sizer" aria-hidden="true">
+                <th role="presentation" className="seq-col" />
+                <th role="presentation" className="balance-col" />
+                <th role="presentation" className="amount-col" />
+                <th role="presentation" className="rate-col" />
+                <th role="presentation" className="expense-col" />
+                <th role="presentation" className="label-col" />
+                <th role="presentation" className="date-col" />
+                {editable && <th role="presentation" className="action-col print-hide capture-hide" />}
+              </tr>
               <tr>
                 <th rowSpan={2} className="seq-col">
                   م
