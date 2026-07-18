@@ -152,9 +152,6 @@
 .sticky-notes{position:fixed;inset:0;z-index:40;pointer-events:none}
 .sticky-note{position:fixed;width:min(270px,calc(100vw - 24px));min-height:190px;padding:43px 24px 24px;background:linear-gradient(145deg,#fff98b 0%,#fff36b 55%,#f7e958 100%);color:#263238;box-shadow:0 14px 22px #243a4524,0 2px 3px #243a4517;transform-origin:50% 4%;transition:box-shadow .15s;pointer-events:auto}
 .sticky-note::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(110deg,#fff9 0%,transparent 28%,transparent 78%,#b9a90012 100%)}
-.sticky-note-0{rotate:-1.2deg}
-.sticky-note-1{rotate:.8deg}
-.sticky-note-2{rotate:-.35deg}
 .sticky-note:hover{box-shadow:0 17px 25px #243a4529,0 2px 3px #243a4517}
 .sticky-tape{position:absolute;z-index:2;top:-16px;right:50%;width:64px;height:34px;transform:translateX(50%) rotate(-1deg);background:linear-gradient(180deg,#fa759cdd,#f7a4bcbb);box-shadow:0 3px 6px #5d3e4630;cursor:grab;touch-action:none}
 .sticky-tape:active{cursor:grabbing}

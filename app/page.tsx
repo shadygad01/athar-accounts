@@ -22,12 +22,22 @@ type StickyNote = {
   x?: number;
   y?: number;
   z?: number;
+  rotation?: number;
 };
 
 const NOTES_STORAGE_KEY = "athar-home-sticky-notes-v1";
 const CLIENTS_STORAGE_KEY = "athar-private-accounts-clients-v1";
 const RATES_STORAGE_KEY = "athar-private-accounts-rates-v1";
 const SUPPLIERS_STORAGE_KEY = "athar-suppliers-accounts-suppliers-v1";
+
+const storedNoteRotation = (note: StickyNote) => {
+  if (typeof note.rotation === "number") return note.rotation;
+  const hash = [...note.id].reduce(
+    (value, character) => value + character.charCodeAt(0),
+    0,
+  );
+  return ((hash % 37) - 18) / 10;
+};
 
 export default function Home() {
   const [notes, setNotes] = useState<StickyNote[]>([]);
@@ -72,6 +82,7 @@ export default function Home() {
         x: 24 + (currentNotes.length % 4) * 34,
         y: Math.max(16, 150 + (currentNotes.length % 4) * 28),
         z: Date.now(),
+        rotation: Number((Math.random() * 3.6 - 1.8).toFixed(1)),
       },
       ...currentNotes,
     ]);
@@ -296,12 +307,13 @@ export default function Home() {
       <div className="sticky-notes" aria-live="polite">
         {notes.map((note, index) => (
           <article
-            className={`sticky-note sticky-note-${index % 3}`}
+            className="sticky-note"
             key={note.id}
             style={{
               left: note.x ?? 24 + (index % 4) * 34,
               top: note.y ?? 150 + (index % 5) * 34,
               zIndex: note.z ?? 100 + index,
+              rotate: `${storedNoteRotation(note)}deg`,
             }}
           >
             <span
