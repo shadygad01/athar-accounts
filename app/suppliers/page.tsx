@@ -384,9 +384,7 @@ export default function SuppliersPage() {
                       <span className="company-dot">{s.name.slice(0, 1)}</span>
                       <div>
                         <h3>{s.name}</h3>
-                        <p>
-                          {currencySymbol(s.currency)} · {s.transactions.length} حركة
-                        </p>
+                        <p>{s.transactions.length} حركة</p>
                       </div>
                       <div className="company-money">
                         <small>الرصيد المستحق اليوم</small>
@@ -437,9 +435,7 @@ export default function SuppliersPage() {
                       <span className="company-dot">{selectedSupplier.name.slice(0, 1)}</span>
                       <div>
                         <h3>{supplierTitle(selectedSupplier.name)}</h3>
-                        <p>
-                          {currencySymbol(selectedSupplier.currency)} · {selectedSupplier.notes || "بدون ملاحظات"}
-                        </p>
+                        <p>{selectedSupplier.notes || "بدون ملاحظات"}</p>
                       </div>
                     </div>
                   </div>
@@ -802,7 +798,6 @@ function SupplierStatement({
           </div>
           <div className="statement-title">
             <h2 className="client-name">{supplierTitle(supplier.name)}</h2>
-            <p style={{ margin: 0, color: "var(--muted)", fontSize: 12 }}>{currencySymbol(supplier.currency)}</p>
           </div>
           <div className="as-of">
             <small style={{ color: "var(--muted)", fontSize: 11 }}>محسوب حتى تاريخ</small>
