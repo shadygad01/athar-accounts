@@ -60,6 +60,32 @@
 .capturing .ledger-table th.rate-col,.capturing .ledger-table td.rate-col{padding-left:2px;padding-right:4px}
 .capturing .supplier-ledger th.balance-col,.capturing .supplier-ledger td.balance-col{padding-left:5px;padding-right:5px}
 .capturing .supplier-ledger th.expense-col,.capturing .supplier-ledger td.expense-col{padding-left:4px;padding-right:4px}
+
+/* عند الطباعة: اترك الخط كما هو واضغط العرض الناتج عن الحشو والتمدد فقط.
+   العرض التلقائي يمنع الجدول من تجاوز صف ملخص الرصيد عندما لا تحتاج محتوياته لكل عرض الصفحة. */
+@media print{
+  .supplier-report-table table{width:auto;max-width:100%;margin-inline-start:0;margin-inline-end:auto}
+  .supplier-report-table .supplier-ledger th,
+  .supplier-report-table .supplier-ledger td{padding:4px 3px}
+  .supplier-report-table .supplier-ledger th.balance-col,
+  .supplier-report-table .supplier-ledger td.balance-col,
+  .supplier-report-table .supplier-ledger th.expense-col,
+  .supplier-report-table .supplier-ledger td.expense-col{padding-left:3px;padding-right:3px}
+  .supplier-report-table .supplier-ledger th.seq-col,
+  .supplier-report-table .supplier-ledger td.seq-col{width:32px}
+  .supplier-report-table .supplier-ledger th.balance-col,
+  .supplier-report-table .supplier-ledger td.balance-col{width:130px}
+  .supplier-report-table .supplier-ledger th.amount-col,
+  .supplier-report-table .supplier-ledger td.amount-col{width:72px}
+  .supplier-report-table .supplier-ledger th.rate-col,
+  .supplier-report-table .supplier-ledger td.rate-col{width:52px}
+  .supplier-report-table .supplier-ledger th.expense-col,
+  .supplier-report-table .supplier-ledger td.expense-col{width:105px}
+  .supplier-report-table .supplier-ledger th.label-col,
+  .supplier-report-table .supplier-ledger td.label-col{width:230px}
+  .supplier-report-table .supplier-ledger th.date-col,
+  .supplier-report-table .supplier-ledger td.date-col{width:100px}
+}
 .supplier-ledger tbody tr.row-withdrawal td{background:#fdf3f3}
 .stats.four-col{grid-template-columns:repeat(4,1fr)}
 @media(max-width:1050px){.stats.four-col{grid-template-columns:1fr 1fr}}
