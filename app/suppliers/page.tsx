@@ -796,7 +796,11 @@ function SupplierStatement({
     <div>
       <div ref={captureRef}>
         <div className="statement-head print-hide">
-          <div>
+          <div className="as-of" style={{ visibility: "hidden" }} aria-hidden="true">
+            <small style={{ fontSize: 11 }}>محسوب حتى تاريخ</small>
+            <b>{asOfDate}</b>
+          </div>
+          <div className="statement-title">
             <h2 className="client-name">{supplierTitle(supplier.name)}</h2>
             <p style={{ margin: 0, color: "var(--muted)", fontSize: 12 }}>{currencySymbol(supplier.currency)}</p>
           </div>
