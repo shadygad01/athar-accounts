@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "حسابات خاصة — مجموعة شركات آثار للسياحة",
+  title: "حسابات خاصة",
   description: "نظام متابعة حسابات العملاء الخاصة وعوائدها الشهرية ومسحوباتهم",
   robots: {
     index: false,
