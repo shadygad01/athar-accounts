@@ -56,7 +56,7 @@
 .capturing{width:var(--capture-width,fit-content);max-width:100%;margin-inline-start:auto}
 .capturing .statement-head{padding:6px}
 .capturing .report-summary{gap:6px;margin:0 0 6px!important}
-.capturing .report-summary span{padding:3px 6px}
+.capturing .report-summary span{padding:3px 6px;font-size:15px}
 .capturing .supplier-report-table table{width:100%;max-width:100%;table-layout:fixed;margin-inline-start:0;margin-inline-end:auto}
 .capturing .supplier-ledger th,.capturing .supplier-ledger td{padding:4px 3px}
 .capturing .ledger-table th.rate-col,.capturing .ledger-table td.rate-col{padding-left:2px;padding-right:4px}
