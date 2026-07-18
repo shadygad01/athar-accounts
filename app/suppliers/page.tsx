@@ -845,7 +845,9 @@ function SupplierStatement({
           <table className="ledger-table supplier-ledger">
             <thead>
               <tr>
-                <th rowSpan={2}>م</th>
+                <th rowSpan={2} className="seq-col">
+                  م
+                </th>
                 <th rowSpan={2} className="balance-col">
                   رصيد
                 </th>
@@ -856,11 +858,13 @@ function SupplierStatement({
                 <th rowSpan={2} className="label-col">
                   بيان
                 </th>
-                <th rowSpan={2}>تاريخ</th>
+                <th rowSpan={2} className="date-col">
+                  تاريخ
+                </th>
                 {editable && <th rowSpan={2} className="print-hide capture-hide"></th>}
               </tr>
               <tr>
-                <th>{`مبلغ (${currencySymbol(supplier.currency)})`}</th>
+                <th className="amount-col">{`مبلغ (${currencySymbol(supplier.currency)})`}</th>
                 <th className="rate-col">معدل</th>
               </tr>
             </thead>
@@ -879,15 +883,15 @@ function SupplierStatement({
                             : ""
                     }
                   >
-                    <td>{row.kind === "carry" ? "—" : row.seq}</td>
+                    <td className="seq-col">{row.kind === "carry" ? "—" : row.seq}</td>
                     <td className="balance-col">
                       <b>{egpMoney(Math.round(row.balanceAfter))}</b>
                     </td>
-                    <td>{row.kind === "supply" ? Math.round(row.currencyAmount || 0) : ""}</td>
+                    <td className="amount-col">{row.kind === "supply" ? Math.round(row.currencyAmount || 0) : ""}</td>
                     <td className="rate-col">{row.kind === "supply" ? row.rate : ""}</td>
                     <td className="expense-col">{row.kind === "payment" ? egpMoney(Math.round(-row.egpDelta)) : ""}</td>
                     <td className="label-col">{row.label}</td>
-                    <td>{row.date}</td>
+                    <td className="date-col">{row.date}</td>
                     {editable && (
                       <td className="print-hide capture-hide">
                         {(row.kind === "supply" || row.kind === "payment") && (
@@ -915,9 +919,9 @@ function SupplierStatement({
             {sheet.rows.length > 0 && (
               <tfoot>
                 <tr className="total-row">
-                  <td></td>
+                  <td className="seq-col"></td>
                   <td className="balance-final balance-col">{egpMoney(Math.round(sheetClosing))}</td>
-                  <td>{Math.round(sheetForeign)}</td>
+                  <td className="amount-col">{Math.round(sheetForeign)}</td>
                   <td className="rate-col"></td>
                   <td className="expense-col">{egpMoney(Math.round(sheetPaid))}</td>
                   <td colSpan={2}>الإجمالي — كشف رقم {sheet.index}</td>
