@@ -41,26 +41,9 @@
 .stats.four-col{grid-template-columns:repeat(4,1fr)}
 @media(max-width:1050px){.stats.four-col{grid-template-columns:1fr 1fr}}
 
-/* كشف حساب مضغوط بشكل جدول إكسل — يُستخدم فقط عند نسخ الحساب كصورة.
-   يبقى خارج الشاشة المرئية دائمًا، ويظهر لحظيًا داخل نافذة العرض أثناء الالتقاط فقط
-   لأن التصيير الصحيح للنص العربي في المكتبة يتطلب أن يكون العنصر ظاهرًا فعليًا. */
-.excel-capture-wrap{position:fixed;top:-6000px;right:0;z-index:-1}
-.excel-capture-wrap.visible{position:fixed;inset:0;top:0;right:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:#0a1e29c0}
-.excel-capture{direction:rtl;background:#fff;width:max-content;border-radius:14px;overflow:hidden;box-shadow:0 20px 60px #0006;padding:18px}
-.excel-row-pad td{background:#fff}
-.excel-capture table{border-collapse:collapse;table-layout:fixed;width:575px;min-width:0;font-family:"Segoe UI",Tahoma,Arial,sans-serif}
-.excel-capture th,.excel-capture td{border:1px solid var(--line);padding:6px 7px;font-size:11.5px;line-height:1.4;text-align:center;white-space:nowrap;overflow:hidden;color:var(--ink)}
-.excel-capture thead tr:first-child th{background:linear-gradient(135deg,#14374a,#0e2939);border-color:#0e2939;color:#fff;font-size:15px;font-weight:800;padding:12px}
-.excel-capture thead tr:nth-child(2) th,.excel-capture thead tr:nth-child(3) th{background:#e6f2f1;color:var(--navy);font-weight:800}
-.excel-capture .excel-label{text-align:right}
-.excel-capture .excel-balance{font-weight:800;color:var(--teal)}
-.excel-capture thead tr:nth-child(3) th.excel-rate{color:#7c9491;font-weight:600}
-.excel-capture td.excel-rate{font-size:10px;color:var(--muted);font-weight:400}
-.excel-capture tbody tr.excel-row-supply td{background:#f2f9f7}
-.excel-capture tbody tr.excel-row-payment td{background:#fdf2f2}
-.excel-capture tbody tr.excel-row-carry td{background:#fafbfb;color:var(--muted);font-style:italic}
-.excel-capture tfoot td{font-weight:800;background:#eef5f5;color:var(--navy)}
-.excel-capture .excel-highlight{background:#fbe98c;color:var(--navy)}
+/* عناصر تنقّل/تحكم داخل كشف الحساب لا يجب أن تظهر في الصورة الملتقطة عند نسخ الحساب،
+   رغم بقائها ظاهرة على الشاشة (مثل تابات الكشوف وأزرار تعديل/حذف الحركات). */
+.capture-hide{}
 
 /* رابط العودة لكل الخدمات داخل الشريط الجانبي — بنفس شكل أزرار الشريط الجانبي البسيطة */
 .side-link{display:block;border:0;background:transparent;color:#bdd0d9;border-radius:10px;padding:13px 14px;text-align:right;font:inherit;cursor:pointer;text-decoration:none}

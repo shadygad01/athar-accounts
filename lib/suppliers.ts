@@ -10,8 +10,7 @@
 
 export type SupplierCurrency = "AED" | "SAR";
 
-export const currencyLabel = (c: SupplierCurrency) => (c === "AED" ? "درهم إماراتي" : "ريال سعودي");
-export const currencySymbol = (c: SupplierCurrency) => (c === "AED" ? "د.إ" : "ر.س");
+export const currencySymbol = (c: SupplierCurrency) => (c === "AED" ? "د.أ" : "ر.س");
 
 export const foreignMoney = (n: number, currency: SupplierCurrency) =>
   new Intl.NumberFormat("ar-EG", { maximumFractionDigits: 2, numberingSystem: "latn" }).format(
@@ -19,17 +18,6 @@ export const foreignMoney = (n: number, currency: SupplierCurrency) =>
   ) +
   " " +
   currencySymbol(currency);
-
-const SHORT_MONTHS_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-/** تاريخ مختصر بصيغة "9-Jul" لعرضه في كشف الحساب المضغوط الشبيه بجدول إكسل. */
-export const shortDate = (iso: string) => {
-  const [, month, day] = iso.split("-").map(Number);
-  return `${day}-${SHORT_MONTHS_EN[month - 1]}`;
-};
-
-/** رقم صحيح بدون فواصل آلاف أو رموز عملة — لعرضه في كشف الحساب المضغوط الشبيه بجدول إكسل. */
-export const plainNumber = (n: number) => Math.round(n).toString();
 
 export type SupplierTxType = "supply" | "payment";
 export type SupplierTx = {
