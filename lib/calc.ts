@@ -21,7 +21,6 @@ export type Withdrawal = {
 export type Client = {
   id: string;
   name: string;
-  phone?: string;
   notes?: string;
   tranches: Tranche[];
   withdrawals: Withdrawal[];
