@@ -25,8 +25,9 @@
 .report-toolbar input,.report-toolbar select{border:1px solid var(--line);padding:9px 10px;border-radius:8px;background:#fff}
 .statement-head{display:flex;justify-content:space-between;align-items:flex-start;padding:22px;border-bottom:1px solid var(--line)}
 .statement-head .client-name{font-size:19px;margin:0 0 6px}
-.statement-head .as-of{text-align:right}
+.statement-head .as-of{text-align:right;flex:0 0 auto}
 .statement-head .as-of b{display:block;font-size:15px;color:var(--teal)}
+.statement-head .statement-title{flex:1;text-align:center}
 @media print{.statement-head{border-bottom:2px solid var(--navy)}}
 
 /* حسابات الموردين — شارات العملة وتمييز الرصيد الختامي */
@@ -34,7 +35,7 @@
 .badge.sar{background:#f5eedf;color:#9c7130}
 .total-row .balance-final{background:#fbe98c;font-weight:800}
 .ledger-table tbody tr.row-carry td{color:var(--muted);font-style:italic;background:#fafbfb}
-.ledger-table th.rate-col,.ledger-table td.rate-col{width:60px;font-size:11px;color:var(--muted);font-weight:400;text-align:right;padding-left:4px;padding-right:6px}
+.ledger-table th.rate-col,.ledger-table td.rate-col{width:60px;font-size:11px;color:#4a5860;font-weight:500;text-align:right;padding-left:4px;padding-right:6px}
 .supplier-report-table{overflow:visible}
 .supplier-report-table table{min-width:0;width:100%;table-layout:auto}
 .supplier-ledger th,.supplier-ledger td{font-size:14px;color:var(--ink);font-weight:500}
