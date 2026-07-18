@@ -87,6 +87,7 @@ export default function Home() {
   const [reportClientId, setReportClientId] = useState<string>("");
   const [reportDateInput, setReportDateInput] = useState<string>(today());
   const [report, setReport] = useState<{ clientId: string; asOfDate: string; result: LedgerResult } | null>(null);
+  const [printedAt, setPrintedAt] = useState<string>("");
 
   // قراءة لمرة واحدة من localStorage عند التحميل — لا يوجد عرض من الخادم لمزامنته معه،
   // فالمتصفح هو مصدر البيانات الوحيد لهذا التطبيق.
@@ -328,6 +329,17 @@ export default function Home() {
   }
 
   function printReport() {
+    // نُثبّت تاريخ ووقت الطباعة داخل محتوى الصفحة نفسه، لأن ترويسة/تذييل الطباعة
+    // التلقائية في المتصفح (لو أوقفها المستخدم) تختفي بالكامل ولا نتحكم فيها من الكود.
+    setPrintedAt(
+      new Date().toLocaleString("ar-EG-u-ca-gregory", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    );
     // المتصفح يضيف عنوان الصفحة تلقائيًا في ترويسة الطباعة؛ نُفرغه مؤقتًا حتى لا يظهر
     // اسم النظام والشركة أعلى كشف الحساب المطبوع، ثم نُعيده بعد انتهاء الطباعة.
     const originalTitle = document.title;
@@ -337,7 +349,8 @@ export default function Home() {
       window.removeEventListener("afterprint", restoreTitle);
     };
     window.addEventListener("afterprint", restoreTitle);
-    window.print();
+    // تأجيل بسيط حتى يُحدَّث الـ DOM بوقت الطباعة الجديد قبل فتح نافذة الطباعة.
+    requestAnimationFrame(() => window.print());
   }
 
   const reportClient = report ? clients.find((c) => c.id === report.clientId) : null;
@@ -922,7 +935,8 @@ export default function Home() {
                 <div className="print-title">
                   <h1>كشف حساب — حسابات خاصة</h1>
                   <p>
-                    تاريخ التقرير {report.asOfDate} · أُصدر بتاريخ {today()}
+                    تاريخ التقرير {report.asOfDate}
+                    {printedAt ? ` · تاريخ ووقت الطباعة ${printedAt}` : ""}
                   </p>
                 </div>
                 <div className="panel">
@@ -947,19 +961,19 @@ export default function Home() {
                 </div>
 
                 <div className="report-summary">
-                  <span>
+                  <span className="print-hide">
                     إجمالي المودَع <b>{money(report.result.summary.totalDeposited)}</b>
                   </span>
                   <span>
                     أصل المبلغ المتبقي <b>{money(report.result.summary.principalRemaining)}</b>
                   </span>
-                  <span>
+                  <span className="print-hide">
                     إجمالي الفوائد منذ البداية <b>{money(report.result.summary.totalInterestAccrued)}</b>
                   </span>
                   <span>
                     الفوائد المستحقة غير المسحوبة <b>{money(report.result.summary.interestDue)}</b>
                   </span>
-                  <span>
+                  <span className="print-hide">
                     إجمالي المسحوبات <b>{money(report.result.summary.totalWithdrawnPrincipal + report.result.summary.totalWithdrawnInterest)}</b>
                   </span>
                   <span>
