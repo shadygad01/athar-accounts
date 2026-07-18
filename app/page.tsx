@@ -106,10 +106,13 @@ export default function Home() {
     setNotes((currentNotes) => {
       const selectedNote = currentNotes.find((note) => note.id === id);
       if (!selectedNote) return currentNotes;
-      return normalizeNoteLayers([
-        ...currentNotes.filter((note) => note.id !== id),
-        selectedNote,
-      ]);
+      const otherNotes = normalizeNoteLayers(
+        currentNotes.filter((note) => note.id !== id),
+      );
+      return [
+        ...otherNotes,
+        { ...selectedNote, z: 100 + otherNotes.length },
+      ];
     });
   };
 
