@@ -116,13 +116,15 @@
 /* رابط العودة لكل الخدمات داخل الشريط الجانبي — بنفس شكل أزرار الشريط الجانبي البسيطة */
 .side-link{display:block;border:0;background:transparent;color:#bdd0d9;border-radius:10px;padding:13px 14px;text-align:right;font:inherit;cursor:pointer;text-decoration:none}
 .side-link:hover{background:#ffffff10}
+.sidebar nav .nav-link{display:flex;align-items:center;gap:13px;width:100%;border:0;background:transparent;color:#d8e4e9;border-radius:10px;padding:13px 14px;text-align:right;font:inherit;cursor:pointer;text-decoration:none}
+.sidebar nav .nav-link:hover{background:#ffffff10}
 
 /* الصفحة الرئيسية — اختيار الخدمة */
 .landing{min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:60px 24px;background:linear-gradient(180deg,#f5f7f8,#eef2f3)}
 .landing-head{display:flex;gap:16px;align-items:center;max-width:720px;text-align:right;margin-bottom:44px}
 .landing-head h1{margin:0;font-size:28px;color:var(--navy)}
 .landing-head p{margin:8px 0 0;color:var(--muted);font-size:14px}
-.service-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;max-width:900px;width:100%}
+.service-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:900px;width:100%}
 .service-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:28px;text-decoration:none;color:var(--ink);box-shadow:0 4px 14px #132f3d0d;position:relative;transition:transform .15s,border-color .15s}
 .service-card:hover{transform:translateY(-2px);border-color:#8ebdbb}
 .service-icon{display:grid;place-items:center;width:48px;height:48px;border-radius:12px;background:#e6f2f1;color:var(--teal);font-weight:900;font-size:20px;margin-bottom:16px}
@@ -160,3 +162,16 @@
 .sticky-note p{position:relative;z-index:1;margin:0 0 30px;white-space:pre-wrap;overflow-wrap:anywhere;font-family:"Segoe Print","Comic Sans MS",Tahoma,sans-serif;font-size:17px;font-weight:600;line-height:1.9}
 .sticky-date{position:absolute;z-index:1;right:22px;bottom:15px;color:#776b26;font-size:11px;font-weight:700;direction:rtl}
 @media(max-width:760px){.service-grid{grid-template-columns:1fr}.landing{padding:36px 18px}.landing-head{flex-direction:column;text-align:center}.system-backup{align-items:stretch;flex-direction:column}.system-backup-actions{display:grid;grid-template-columns:1fr}.system-backup-actions button{min-height:44px}.sticky-board-head{align-items:start}.sticky-form-row{flex-direction:column}.sticky-form button{min-height:46px}.sticky-note{min-height:170px}}
+
+/* الحسابات الدائنة */
+.brand small{display:block;margin-top:5px;color:#93acb8;font-size:10px}
+.payables-summary-note{padding:14px 16px;border:1px solid #cfe0df;border-radius:11px;background:#f2f8f7;color:#47666a;font-size:13px}
+.payable-account-head{padding:18px 20px}
+.payable-account-head .contract-top{align-items:center}
+.payable-account-head .contract-top>div:first-child{display:flex;align-items:center;gap:12px}
+.payable-account-head h3{margin:0}
+.payable-account-head p{margin:5px 0 0;color:var(--muted)}
+.payable-stats{grid-template-columns:repeat(3,1fr)}
+.payable-stats article{min-height:106px}
+.payable-stats .stat-icon{flex:none}
+@media(max-width:760px){.payable-stats{grid-template-columns:1fr}.payable-account-head .contract-top{align-items:flex-start;gap:16px}.payable-account-head .tx-type-actions{flex-wrap:wrap}}

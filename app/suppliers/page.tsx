@@ -252,6 +252,10 @@ export default function SuppliersPage() {
               {n.label}
             </button>
           ))}
+          <Link href="/payables" className="nav-link">
+            <span>◒</span>
+            حسابات دائنة
+          </Link>
         </nav>
         <div className="side-actions">
           <Link href="/" className="side-link">

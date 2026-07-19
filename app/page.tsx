@@ -13,6 +13,7 @@ import {
 const services = [
   { href: "/clients", icon: "▤", title: "حسابات خاصة" },
   { href: "/suppliers", icon: "◫", title: "حسابات الموردين" },
+  { href: "/payables", icon: "◒", title: "حسابات دائنة" },
 ];
 
 type StickyNote = {
@@ -29,6 +30,7 @@ const NOTES_STORAGE_KEY = "athar-home-sticky-notes-v1";
 const CLIENTS_STORAGE_KEY = "athar-private-accounts-clients-v1";
 const RATES_STORAGE_KEY = "athar-private-accounts-rates-v1";
 const SUPPLIERS_STORAGE_KEY = "athar-suppliers-accounts-suppliers-v1";
+const PAYABLES_STORAGE_KEY = "athar-accounts-payable-v1";
 
 const storedNoteRotation = (note: StickyNote) => {
   if (typeof note.rotation === "number") return note.rotation;
@@ -186,6 +188,7 @@ export default function Home() {
         clients: readArray(CLIENTS_STORAGE_KEY),
         rates: readArray(RATES_STORAGE_KEY),
         suppliers: readArray(SUPPLIERS_STORAGE_KEY),
+        payables: readArray(PAYABLES_STORAGE_KEY),
         notes: readArray(NOTES_STORAGE_KEY),
       },
     };
@@ -221,6 +224,7 @@ export default function Home() {
         Array.isArray(data.clients) &&
         Array.isArray(data.rates) &&
         Array.isArray(data.suppliers) &&
+        (data.payables === undefined || Array.isArray(data.payables)) &&
         Array.isArray(data.notes);
 
       if (!isValid || !data) {
@@ -229,7 +233,7 @@ export default function Home() {
       }
       if (
         !confirm(
-          "سيتم استبدال كل بيانات النظام الحالية: الحسابات الخاصة، الموردين، معدلات العائد، والملاحظات. هل تريد المتابعة؟",
+          "سيتم استبدال كل بيانات النظام الحالية: الحسابات الخاصة، الموردين، الحسابات الدائنة، معدلات العائد، والملاحظات. هل تريد المتابعة؟",
         )
       ) {
         return;
@@ -241,6 +245,7 @@ export default function Home() {
         SUPPLIERS_STORAGE_KEY,
         JSON.stringify(data.suppliers),
       );
+      localStorage.setItem(PAYABLES_STORAGE_KEY, JSON.stringify(data.payables || []));
       localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(data.notes));
       setNotes(data.notes as StickyNote[]);
       alert("تمت استعادة بيانات النظام كاملة بنجاح.");
@@ -306,7 +311,7 @@ export default function Home() {
       <section className="system-backup" aria-labelledby="system-backup-title">
         <div>
           <h2 id="system-backup-title">بيانات النظام</h2>
-          <p>نسخة واحدة تشمل الحسابات الخاصة والموردين والملاحظات.</p>
+          <p>نسخة واحدة تشمل الحسابات الخاصة والموردين والحسابات الدائنة والملاحظات.</p>
         </div>
         <div className="system-backup-actions">
           <button type="button" onClick={backupSystem}>
