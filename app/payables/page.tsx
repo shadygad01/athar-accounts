@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { money, today, uid } from "@/lib/calc";
 import {
   PayableAccount,
@@ -21,6 +21,9 @@ export default function PayablesPage() {
   const [editingAccount, setEditingAccount] = useState<PayableAccount | null>(null);
   const [editingEntry, setEditingEntry] = useState<PayableEntry | null>(null);
   const [entryType, setEntryType] = useState<PayableEntryType>("obligation");
+  const reportRef = useRef<HTMLDivElement>(null);
+  const [copying, setCopying] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
@@ -125,6 +128,37 @@ export default function PayablesPage() {
     );
   }
 
+  async function copyReportAsImage() {
+    if (!reportRef.current || !selected) return;
+    setCopying(true);
+    reportRef.current.classList.add("capturing-payable-report");
+    try {
+      const { toBlob } = await import("html-to-image");
+      const blob = await toBlob(reportRef.current, {
+        backgroundColor: "#f5f7f8",
+        pixelRatio: 2,
+        filter: (node) => !(node instanceof HTMLElement && node.classList.contains("capture-hide")),
+      });
+      if (!blob) throw new Error("تعذر إنشاء الصورة");
+      try {
+        await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch {
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `كشف حساب - ${selected.name}.png`;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+      }
+    } catch {
+      alert("تعذر نسخ التقرير كصورة على هذا المتصفح.");
+    } finally {
+      reportRef.current?.classList.remove("capturing-payable-report");
+      setCopying(false);
+    }
+  }
+
   if (!ready) return <main className="loading">جارٍ تجهيز الحسابات الدائنة…</main>;
 
   return (
@@ -188,49 +222,62 @@ export default function PayablesPage() {
             <div className="company-tools print-hide">
               <button className="secondary" onClick={() => setSelectedId("")}>→ كل أصحاب الالتزامات</button>
               <button className="secondary" onClick={() => { setEditingAccount(selected); setModal("account"); }}>تعديل الاسم والبيانات</button>
+              <button className="secondary" onClick={copyReportAsImage} disabled={copying}>
+                {copying ? "جارٍ تجهيز الصورة…" : copied ? "✓ تم نسخ التقرير" : "⧉ نسخ التقرير كصورة"}
+              </button>
               <button className="danger-link" onClick={deleteAccount}>حذف الحساب</button>
             </div>
 
-            <div className="contract-card payable-account-head">
-              <div className="contract-top">
-                <div><span className="company-dot">{selected.name.slice(0, 1)}</span><div><h3>{selected.name}</h3><p>{selected.notes || "بدون ملاحظات"}</p></div></div>
-                <div className="tx-type-actions print-hide">
-                  <button className="tx-btn-supply" onClick={() => openNewEntry("obligation")}>＋ إضافة التزام</button>
-                  <button className="tx-btn-payment" onClick={() => openNewEntry("payment")}>＋ دفعة سداد</button>
+            <div ref={reportRef} className="payable-report-capture">
+              <div className="contract-card payable-account-head">
+                <div className="contract-top">
+                  <div><span className="company-dot">{selected.name.slice(0, 1)}</span><div><h3>{selected.name}</h3><p>{selected.notes || "بدون ملاحظات"}</p></div></div>
+                  <div className="tx-type-actions print-hide capture-hide">
+                    <button className="tx-btn-supply" onClick={() => openNewEntry("obligation")}>＋ إضافة التزام</button>
+                    <button className="tx-btn-payment" onClick={() => openNewEntry("payment")}>＋ دفعة سداد</button>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="stats payable-stats">
-              <article><span className="stat-icon blue">＋</span><div><small>إجمالي الالتزامات</small><b>{money(ledger.totalObligations)}</b></div></article>
-              <article><span className="stat-icon green">✓</span><div><small>إجمالي المسدد</small><b>{money(ledger.totalPayments)}</b></div></article>
-              <article><span className="stat-icon red">◫</span><div><small>الرصيد المتبقي</small><b>{money(ledger.balance)}</b></div></article>
-            </div>
+              <div className="stats payable-stats">
+                <article><span className="stat-icon blue">＋</span><div><small>إجمالي الالتزامات</small><b>{money(ledger.totalObligations)}</b></div></article>
+                <article><span className="stat-icon green">✓</span><div><small>إجمالي المسدد</small><b>{money(ledger.totalPayments)}</b></div></article>
+                <article><span className="stat-icon red">◫</span><div><small>الرصيد المتبقي</small><b>{money(ledger.balance)}</b></div></article>
+              </div>
 
-            <div className="panel report-table">
-              <div className="panel-head"><div><h2>كشف الحساب</h2><p>كل الالتزامات ودفعات السداد مرتبة زمنيًا</p></div></div>
-              <div className="table-wrap">
-                <table>
-                  <thead><tr><th>التاريخ</th><th>البيان</th><th>التزام</th><th>سداد</th><th>الرصيد</th><th className="print-hide">إجراءات</th></tr></thead>
-                  <tbody>
-                    {ledger.rows.map((row) => (
-                      <tr key={row.id} className={row.type === "payment" ? "row-withdrawal" : "row-deposit"}>
-                        <td>{row.date}</td>
-                        <td>{row.note || (row.type === "obligation" ? "إثبات التزام" : "دفعة سداد")}</td>
-                        <td>{row.type === "obligation" ? money(row.amount) : "—"}</td>
-                        <td>{row.type === "payment" ? money(row.amount) : "—"}</td>
-                        <td><b>{money(row.balanceAfter)}</b></td>
-                        <td className="print-hide">
-                          <div className="payment-actions">
-                            <button className="edit-payment" onClick={() => { setEditingEntry(row); setEntryType(row.type); setModal("entry"); }}>تعديل</button>
-                            <button className="delete-payment" onClick={() => deleteEntry(row.id)}>حذف</button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                    {!ledger.rows.length && <tr><td colSpan={6} className="empty">لا توجد حركات مسجلة في هذا الحساب بعد.</td></tr>}
-                  </tbody>
-                </table>
+              <div className="panel report-table payable-report-table">
+                <div className="panel-head"><div><h2>كشف الحساب</h2><p>كل الالتزامات ودفعات السداد مرتبة زمنيًا</p></div></div>
+                <div className="table-wrap">
+                  <table>
+                    <colgroup>
+                      <col className="payable-date-col" />
+                      <col className="payable-note-col" />
+                      <col className="payable-money-col" />
+                      <col className="payable-money-col" />
+                      <col className="payable-balance-col" />
+                      <col className="payable-actions-col capture-hide" />
+                    </colgroup>
+                    <thead><tr><th>التاريخ</th><th>البيان</th><th>التزام</th><th>سداد</th><th>الرصيد</th><th className="print-hide capture-hide">إجراءات</th></tr></thead>
+                    <tbody>
+                      {ledger.rows.map((row) => (
+                        <tr key={row.id} className={row.type === "payment" ? "row-withdrawal" : "row-deposit"}>
+                          <td>{row.date}</td>
+                          <td>{row.note || (row.type === "obligation" ? "إثبات التزام" : "دفعة سداد")}</td>
+                          <td>{row.type === "obligation" ? money(row.amount) : "—"}</td>
+                          <td>{row.type === "payment" ? money(row.amount) : "—"}</td>
+                          <td><b>{money(row.balanceAfter)}</b></td>
+                          <td className="print-hide capture-hide">
+                            <div className="payment-actions">
+                              <button className="edit-payment" onClick={() => { setEditingEntry(row); setEntryType(row.type); setModal("entry"); }}>تعديل</button>
+                              <button className="delete-payment" onClick={() => deleteEntry(row.id)}>حذف</button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {!ledger.rows.length && <tr><td colSpan={6} className="empty">لا توجد حركات مسجلة في هذا الحساب بعد.</td></tr>}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </section>

@@ -174,4 +174,21 @@
 .payable-stats{grid-template-columns:repeat(3,1fr)}
 .payable-stats article{min-height:106px}
 .payable-stats .stat-icon{flex:none}
+/* كشف الحساب الدائن مصمم ليلائم عرض الصفحة بالكامل دون تمرير أفقي. */
+.payable-report-table,.payable-report-table .table-wrap{overflow:visible}
+.payable-report-table table{width:100%;min-width:0;table-layout:fixed}
+.payable-report-table th,.payable-report-table td{padding:15px 12px;font-size:14px;line-height:1.55;color:#263b46;overflow-wrap:anywhere}
+.payable-report-table th{font-size:13px;color:#526b78;font-weight:700}
+.payable-report-table td b{font-size:15px;color:#102f40}
+.payable-report-table .payable-date-col{width:14%}
+.payable-report-table .payable-note-col{width:27%}
+.payable-report-table .payable-money-col{width:14%}
+.payable-report-table .payable-balance-col{width:17%}
+.payable-report-table .payable-actions-col{width:14%}
+.capturing-payable-report{width:1080px;max-width:none;padding:22px;background:#f5f7f8}
+.capturing-payable-report .payable-report-table{margin-bottom:0}
+.capturing-payable-report .payable-report-table .payable-date-col{width:16%}
+.capturing-payable-report .payable-report-table .payable-note-col{width:30%}
+.capturing-payable-report .payable-report-table .payable-money-col{width:17%}
+.capturing-payable-report .payable-report-table .payable-balance-col{width:20%}
 @media(max-width:760px){.payable-stats{grid-template-columns:1fr}.payable-account-head .contract-top{align-items:flex-start;gap:16px}.payable-account-head .tx-type-actions{flex-wrap:wrap}}
