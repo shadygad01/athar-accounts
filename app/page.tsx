@@ -91,10 +91,14 @@ export default function Home() {
 
   useEffect(() => {
     let active = true;
+    let lastRatesLoad = 0;
     const loadRates = async () => {
+      lastRatesLoad = Date.now();
       try {
+        const refreshWindow = Math.floor(Date.now() / (2 * 60 * 60 * 1000));
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_PATH || ""}/api/exchange-rates`,
+          `${process.env.NEXT_PUBLIC_BASE_PATH || ""}/api/exchange-rates?v=${refreshWindow}`,
+          { cache: "no-store" },
         );
         if (!response.ok) throw new Error("rates");
         const data = await response.json() as { rates: ExchangeRate[]; updatedAt: string };
@@ -107,9 +111,24 @@ export default function Home() {
         if (active) setRatesError(true);
       }
     };
+    const refreshRatesWhenVisible = () => {
+      if (
+        document.visibilityState === "visible" &&
+        Date.now() - lastRatesLoad >= 2 * 60 * 60 * 1000
+      ) {
+        void loadRates();
+      }
+    };
     void loadRates();
     const timer = window.setInterval(loadRates, 2 * 60 * 60 * 1000);
-    return () => { active = false; window.clearInterval(timer); };
+    document.addEventListener("visibilitychange", refreshRatesWhenVisible);
+    window.addEventListener("focus", refreshRatesWhenVisible);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refreshRatesWhenVisible);
+      window.removeEventListener("focus", refreshRatesWhenVisible);
+    };
   }, []);
 
   useEffect(() => {
