@@ -196,7 +196,7 @@ export function paginateLedger(rows: SupplierLedgerRow[], pageSize = SHEET_SIZE)
       seq: prevLast.seq,
       date: chunk[0].date,
       kind: "carry",
-      label: `رصيد مرحّل من كشف رقم ${idx}`,
+      label: `رصيد مرحّل من صفحة رقم ${idx}`,
       egpDelta: prevLast.balanceAfter,
       balanceAfter: prevLast.balanceAfter,
     };

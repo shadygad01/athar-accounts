@@ -545,6 +545,7 @@ export default function SuppliersPage() {
                   <SupplierStatement
                     supplier={statementSupplier(selectedSupplier, selectedArchiveId)}
                     asOfDate={selectedArchiveId ? archiveStatementDate(selectedSupplier, selectedArchiveId) : today()}
+                    statementNumber={statementNumber(selectedSupplier, selectedArchiveId)}
                     editable={!selectedArchiveId}
                     onEdit={!selectedArchiveId ? (tx) => openEditTxModal(selectedSupplier.id, tx) : undefined}
                     onDelete={!selectedArchiveId ? (txId) => deleteTx(selectedSupplier.id, txId) : undefined}
@@ -669,7 +670,11 @@ export default function SuppliersPage() {
                   <h1>كشف حساب — حسابات الموردين</h1>
                   <p>تاريخ التقرير {report.asOfDate}</p>
                 </div>
-                <SupplierStatement supplier={reportSupplier} asOfDate={report.asOfDate} />
+                <SupplierStatement
+                  supplier={reportSupplier}
+                  asOfDate={report.asOfDate}
+                  statementNumber={statementNumber(reportSupplier, "")}
+                />
               </>
             )}
             {!report && (
@@ -882,12 +887,14 @@ function statementNumber(supplier: Supplier, archiveId: string) {
 function SupplierStatement({
   supplier,
   asOfDate,
+  statementNumber = 1,
   editable = false,
   onEdit,
   onDelete,
 }: {
   supplier: Supplier;
   asOfDate: string;
+  statementNumber?: number;
   editable?: boolean;
   onEdit?: (tx: SupplierTx) => void;
   onDelete?: (txId: string) => void;
@@ -959,7 +966,7 @@ function SupplierStatement({
       } catch {
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = `كشف حساب - ${supplier.name} - كشف ${sheet.index}.png`;
+        link.download = `كشف حساب - ${supplier.name} - كشف ${statementNumber} - صفحة ${sheet.index}.png`;
         link.click();
       }
     } catch {
@@ -1008,7 +1015,7 @@ function SupplierStatement({
           <div className="tabs print-hide capture-hide">
             {sheets.map((s) => (
               <button key={s.index} className={s.index === sheet.index ? "active" : ""} onClick={() => setSheetIndex(s.index - 1)}>
-                كشف رقم {s.index}
+                صفحة {s.index}
               </button>
             ))}
           </div>
@@ -1019,7 +1026,7 @@ function SupplierStatement({
             <div className="panel-head">
               <div>
                 <h2>
-                  كشف رقم {sheet.index} من {sheet.total}
+                  كشف رقم {statementNumber} — صفحة {sheet.index} من {sheet.total}
                 </h2>
                 <p>أرشيف حساب {supplier.name} — الأرقام مستمرة عبر كل الكشوف لإمكانية المراجعة</p>
               </div>
@@ -1124,7 +1131,7 @@ function SupplierStatement({
                   <td className="amount-col">{Math.round(sheetForeign)}</td>
                   <td className="rate-col"></td>
                   <td className="expense-col">{egpMoney(Math.round(sheetPaid))}</td>
-                  <td colSpan={2}>الإجمالي — كشف رقم {sheet.index}</td>
+                  <td colSpan={2}>الإجمالي — كشف رقم {statementNumber}</td>
                   {editable && <td className="print-hide capture-hide"></td>}
                 </tr>
               </tfoot>
