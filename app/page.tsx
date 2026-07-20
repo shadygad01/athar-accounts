@@ -95,9 +95,8 @@ export default function Home() {
     const loadRates = async () => {
       lastRatesLoad = Date.now();
       try {
-        const refreshWindow = Math.floor(Date.now() / (2 * 60 * 60 * 1000));
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_PATH || ""}/api/exchange-rates?v=${refreshWindow}`,
+          `${process.env.NEXT_PUBLIC_BASE_PATH || ""}/api/exchange-rates?v=${Date.now()}`,
           { cache: "no-store" },
         );
         if (!response.ok) throw new Error("rates");
