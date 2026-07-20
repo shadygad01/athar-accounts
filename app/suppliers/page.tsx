@@ -48,6 +48,9 @@ export default function SuppliersPage() {
   const [modal, setModal] = useState<Modal>(null);
   const [selectedSupplierId, setSelectedSupplierId] = useState<string>("");
   const [selectedArchiveId, setSelectedArchiveId] = useState<string>("");
+  const [archiveOpen, setArchiveOpen] = useState(false);
+  const [archiveFrom, setArchiveFrom] = useState("");
+  const [archiveTo, setArchiveTo] = useState("");
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [editingTx, setEditingTx] = useState<{ supplierId: string; tx: SupplierTx } | null>(null);
 
@@ -440,7 +443,7 @@ export default function SuppliersPage() {
                 {suppliersSorted.map((s) => {
                   const ledger = ledgersToday.get(s.id)!;
                   return (
-                    <button className="company-card" key={s.id} onClick={() => { setSelectedSupplierId(s.id); setSelectedArchiveId(""); }}>
+                    <button className="company-card" key={s.id} onClick={() => { setSelectedSupplierId(s.id); setSelectedArchiveId(""); setArchiveOpen(false); }}>
                       <span className="company-dot">{s.name.slice(0, 1)}</span>
                       <div>
                         <h3>{s.name}</h3>
@@ -462,7 +465,7 @@ export default function SuppliersPage() {
             ) : selectedSupplier ? (
               <>
                 <div className="company-tools print-hide">
-                  <button className="secondary" onClick={() => { setSelectedSupplierId(""); setSelectedArchiveId(""); }}>
+                  <button className="secondary" onClick={() => { setSelectedSupplierId(""); setSelectedArchiveId(""); setArchiveOpen(false); }}>
                     → كل الموردين
                   </button>
                   <button
@@ -488,33 +491,33 @@ export default function SuppliersPage() {
                   <button className="primary" onClick={() => createNewStatement(selectedSupplier)}>
                     ＋ إنشاء كشف جديد
                   </button>
+                  {(selectedSupplier.archives?.length || 0) > 0 && (
+                    <button
+                      className="secondary"
+                      onClick={() => {
+                        setArchiveOpen((current) => !current);
+                        setSelectedArchiveId("");
+                      }}
+                    >
+                      أرشيف
+                    </button>
+                  )}
                   <button className="danger-link" onClick={() => deleteSupplier(selectedSupplier.id)}>
                     حذف المورد
                   </button>
                 </div>
-                {(selectedSupplier.archives?.length || 0) > 0 && (
-                  <div className="statement-archive-tabs print-hide">
-                    <button className={!selectedArchiveId ? "active" : ""} onClick={() => setSelectedArchiveId("")}>
-                      الكشف الحالي
-                    </button>
-                    {[...(selectedSupplier.archives || [])].reverse().map((archive, index) => (
-                      <button
-                        key={archive.id}
-                        className={selectedArchiveId === archive.id ? "active" : ""}
-                        onClick={() => setSelectedArchiveId(archive.id)}
-                      >
-                        كشف مؤرشف {selectedSupplier.archives!.length - index}
-                      </button>
-                    ))}
-                  </div>
-                )}
                 <div className="contract-card">
                   <div className="contract-top">
                     <div>
                       <span className="company-dot">{selectedSupplier.name.slice(0, 1)}</span>
                       <div>
                         <h3>{supplierTitle(selectedSupplier.name)}</h3>
-                        <p>{selectedArchiveId ? "كشف مؤرشف — للعرض فقط" : selectedSupplier.notes || "بدون ملاحظات"}</p>
+                        <p>
+                          كشف {statementNumber(selectedSupplier, selectedArchiveId)}
+                          {!selectedArchiveId ? " — الحالي" : ""}
+                          {" · "}
+                          {selectedSupplier.notes || "بدون ملاحظات"}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -678,6 +681,49 @@ export default function SuppliersPage() {
         )}
       </main>
 
+      {archiveOpen && selectedSupplier && (
+        <div className="overlay" onMouseDown={(event) => event.target === event.currentTarget && setArchiveOpen(false)}>
+          <div className="modal archive-modal">
+            <div className="modal-head">
+              <div>
+                <h2>أرشيف كشوف الحساب</h2>
+                <p>اختر فترة العرض ثم افتح الكشف المطلوب.</p>
+              </div>
+              <button type="button" onClick={() => setArchiveOpen(false)}>×</button>
+            </div>
+            <div className="statement-archive-browser">
+              <div className="archive-date-filter">
+                <label>من تاريخ<input type="date" value={archiveFrom} onChange={(event) => setArchiveFrom(event.target.value)} /></label>
+                <label>إلى تاريخ<input type="date" value={archiveTo} onChange={(event) => setArchiveTo(event.target.value)} /></label>
+                {(archiveFrom || archiveTo) && (
+                  <button className="secondary" onClick={() => { setArchiveFrom(""); setArchiveTo(""); }}>مسح الفترة</button>
+                )}
+              </div>
+              <div className="archive-results">
+                {(selectedSupplier.archives || []).map((archive, index) => {
+                  const endDate = archiveEndDate(archive);
+                  const matches = (!archiveFrom || endDate >= archiveFrom) && (!archiveTo || archive.openingDate <= archiveTo);
+                  if (!matches) return null;
+                  return (
+                    <button
+                      key={archive.id}
+                      className={selectedArchiveId === archive.id ? "active" : ""}
+                      onClick={() => {
+                        setSelectedArchiveId(archive.id);
+                        setArchiveOpen(false);
+                      }}
+                    >
+                      <b>كشف {index + 1}</b>
+                      <span>{archive.openingDate} ← {endDate}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {(modal === "newSupplier" || modal === "editSupplier") && (
         <Modal title={editingSupplier ? `تعديل بيانات — ${editingSupplier.name}` : "مورد جديد"} close={() => setModal(null)}>
           <form className="form" onSubmit={saveSupplier}>
@@ -812,10 +858,20 @@ function statementSupplier(supplier: Supplier, archiveId: string): Supplier {
 function archiveStatementDate(supplier: Supplier, archiveId: string) {
   const archive = supplier.archives?.find((item) => item.id === archiveId);
   if (!archive) return today();
+  return archiveEndDate(archive);
+}
+
+function archiveEndDate(archive: SupplierStatementArchive) {
   return archive.transactions.reduce(
     (latest, transaction) => transaction.date > latest ? transaction.date : latest,
     archive.openingDate,
   );
+}
+
+function statementNumber(supplier: Supplier, archiveId: string) {
+  if (!archiveId) return (supplier.archives?.length || 0) + 1;
+  const index = supplier.archives?.findIndex((archive) => archive.id === archiveId) ?? -1;
+  return index >= 0 ? index + 1 : (supplier.archives?.length || 0) + 1;
 }
 
 /**
