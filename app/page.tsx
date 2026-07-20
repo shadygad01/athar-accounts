@@ -9,11 +9,20 @@ import {
   useRef,
   useState,
 } from "react";
+import {
+  REMINDERS_STORAGE_KEY,
+  Reminder,
+  formatReminderDate,
+  isVisibleOnHome,
+  occurrenceForReminder,
+  reminderDaysAway,
+} from "@/lib/reminders";
 
 const services = [
   { href: "/clients", icon: "▤", title: "حسابات خاصة" },
   { href: "/suppliers", icon: "◫", title: "حسابات الموردين" },
   { href: "/payables", icon: "◒", title: "حسابات دائنة" },
+  { href: "/reminders", icon: "◔", title: "تنبيهات" },
 ];
 
 type StickyNote = {
@@ -31,6 +40,7 @@ const CLIENTS_STORAGE_KEY = "athar-private-accounts-clients-v1";
 const RATES_STORAGE_KEY = "athar-private-accounts-rates-v1";
 const SUPPLIERS_STORAGE_KEY = "athar-suppliers-accounts-suppliers-v1";
 const PAYABLES_STORAGE_KEY = "athar-accounts-payable-v1";
+type ExchangeRate = { code: string; name: string; value: number };
 
 const storedNoteRotation = (note: StickyNote) => {
   if (typeof note.rotation === "number") return note.rotation;
@@ -50,6 +60,10 @@ export default function Home() {
   const [notes, setNotes] = useState<StickyNote[]>([]);
   const [noteText, setNoteText] = useState("");
   const [notesLoaded, setNotesLoaded] = useState(false);
+  const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [exchangeRates, setExchangeRates] = useState<ExchangeRate[]>([]);
+  const [ratesUpdatedAt, setRatesUpdatedAt] = useState("");
+  const [ratesError, setRatesError] = useState(false);
   const restoreFileRef = useRef<HTMLInputElement>(null);
   const draggingNote = useRef<{
     id: string;
@@ -66,12 +80,37 @@ export default function Home() {
             normalizeNoteLayers(JSON.parse(storedNotes) as StickyNote[]),
           );
         }
+        const storedReminders = localStorage.getItem(REMINDERS_STORAGE_KEY);
+        if (storedReminders) setReminders(JSON.parse(storedReminders) as Reminder[]);
       } catch {
         localStorage.removeItem(NOTES_STORAGE_KEY);
       } finally {
         setNotesLoaded(true);
       }
     });
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    const loadRates = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BASE_PATH || ""}/api/exchange-rates`,
+        );
+        if (!response.ok) throw new Error("rates");
+        const data = await response.json() as { rates: ExchangeRate[]; updatedAt: string };
+        if (active) {
+          setExchangeRates(data.rates);
+          setRatesUpdatedAt(data.updatedAt);
+          setRatesError(false);
+        }
+      } catch {
+        if (active) setRatesError(true);
+      }
+    };
+    void loadRates();
+    const timer = window.setInterval(loadRates, 2 * 60 * 60 * 1000);
+    return () => { active = false; window.clearInterval(timer); };
   }, []);
 
   useEffect(() => {
@@ -189,6 +228,7 @@ export default function Home() {
         rates: readArray(RATES_STORAGE_KEY),
         suppliers: readArray(SUPPLIERS_STORAGE_KEY),
         payables: readArray(PAYABLES_STORAGE_KEY),
+        reminders: readArray(REMINDERS_STORAGE_KEY),
         notes: readArray(NOTES_STORAGE_KEY),
       },
     };
@@ -225,6 +265,7 @@ export default function Home() {
         Array.isArray(data.rates) &&
         Array.isArray(data.suppliers) &&
         (data.payables === undefined || Array.isArray(data.payables)) &&
+        (data.reminders === undefined || Array.isArray(data.reminders)) &&
         Array.isArray(data.notes);
 
       if (!isValid || !data) {
@@ -233,7 +274,7 @@ export default function Home() {
       }
       if (
         !confirm(
-          "سيتم استبدال كل بيانات النظام الحالية: الحسابات الخاصة، الموردين، الحسابات الدائنة، معدلات العائد، والملاحظات. هل تريد المتابعة؟",
+          "سيتم استبدال كل بيانات النظام الحالية: الحسابات الخاصة، الموردين، الحسابات الدائنة، التنبيهات، معدلات العائد، والملاحظات. هل تريد المتابعة؟",
         )
       ) {
         return;
@@ -246,7 +287,9 @@ export default function Home() {
         JSON.stringify(data.suppliers),
       );
       localStorage.setItem(PAYABLES_STORAGE_KEY, JSON.stringify(data.payables || []));
+      localStorage.setItem(REMINDERS_STORAGE_KEY, JSON.stringify(data.reminders || []));
       localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(data.notes));
+      setReminders((data.reminders || []) as Reminder[]);
       setNotes(data.notes as StickyNote[]);
       alert("تمت استعادة بيانات النظام كاملة بنجاح.");
     } catch {
@@ -276,6 +319,51 @@ export default function Home() {
           </Link>
         ))}
       </div>
+
+      <section className="home-dashboard-row">
+        <div className="currency-widget" aria-live="polite">
+          <div className="currency-widget-head">
+            <div><h2>أسعار العملات اليوم</h2><p>قيمة العملة مقابل الجنيه المصري</p></div>
+            <span>ج.م</span>
+          </div>
+          {exchangeRates.length > 0 ? (
+            <div className="currency-rates">
+              {exchangeRates.map((rate) => (
+                <div key={rate.code}>
+                  <span className="currency-code">{rate.code}</span>
+                  <small>{rate.name}</small>
+                  <b>{rate.value.toLocaleString("ar-EG-u-nu-latn", { minimumFractionDigits: 2, maximumFractionDigits: 4 })}</b>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className={`currency-status ${ratesError ? "error" : ""}`}>
+              {ratesError ? "تعذر تحديث الأسعار الآن." : "جارٍ تحديث الأسعار…"}
+            </p>
+          )}
+          {ratesUpdatedAt && <time>آخر تحديث {new Date(ratesUpdatedAt).toLocaleTimeString("ar-EG-u-nu-latn", { hour: "2-digit", minute: "2-digit" })}</time>}
+        </div>
+
+        <div className="home-reminders">
+          <div className="home-reminders-head">
+            <div><h2>تنبيهات قريبة</h2><p>الالتزامات المستحقة خلال يومين</p></div>
+            <Link href="/reminders">إدارة التنبيهات</Link>
+          </div>
+          <div className="home-reminders-list">
+            {reminders.filter((item) => isVisibleOnHome(item)).map((item) => {
+              const days = reminderDaysAway(item);
+              return (
+                <Link href="/reminders" key={item.id}>
+                  <span className={days < 0 ? "overdue" : ""}>!</span>
+                  <div><b>{item.text}</b><small>{formatReminderDate(occurrenceForReminder(item))}</small></div>
+                  <em>{days < 0 ? "متأخر" : days === 0 ? "اليوم" : days === 1 ? "غدًا" : "بعد يومين"}</em>
+                </Link>
+              );
+            })}
+            {!reminders.some((item) => isVisibleOnHome(item)) && <p className="home-reminders-empty">لا توجد التزامات قريبة.</p>}
+          </div>
+        </div>
+      </section>
 
       <section className="sticky-board" aria-labelledby="sticky-notes-title">
         <div className="sticky-board-head">
@@ -311,7 +399,7 @@ export default function Home() {
       <section className="system-backup" aria-labelledby="system-backup-title">
         <div>
           <h2 id="system-backup-title">بيانات النظام</h2>
-          <p>نسخة واحدة تشمل الحسابات الخاصة والموردين والحسابات الدائنة والملاحظات.</p>
+          <p>نسخة واحدة تشمل الحسابات الخاصة والموردين والحسابات الدائنة والتنبيهات والملاحظات.</p>
         </div>
         <div className="system-backup-actions">
           <button type="button" onClick={backupSystem}>

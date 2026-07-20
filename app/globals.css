@@ -124,7 +124,7 @@
 .landing-head{display:flex;gap:16px;align-items:center;max-width:720px;text-align:right;margin-bottom:44px}
 .landing-head h1{margin:0;font-size:28px;color:var(--navy)}
 .landing-head p{margin:8px 0 0;color:var(--muted);font-size:14px}
-.service-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:900px;width:100%}
+.service-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;max-width:1000px;width:100%}
 .service-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:28px;text-decoration:none;color:var(--ink);box-shadow:0 4px 14px #132f3d0d;position:relative;transition:transform .15s,border-color .15s}
 .service-card:hover{transform:translateY(-2px);border-color:#8ebdbb}
 .service-icon{display:grid;place-items:center;width:48px;height:48px;border-radius:12px;background:#e6f2f1;color:var(--teal);font-weight:900;font-size:20px;margin-bottom:16px}
@@ -162,6 +162,29 @@
 .sticky-note p{position:relative;z-index:1;margin:0 0 30px;white-space:pre-wrap;overflow-wrap:anywhere;font-family:"Segoe Print","Comic Sans MS",Tahoma,sans-serif;font-size:17px;font-weight:600;line-height:1.9}
 .sticky-date{position:absolute;z-index:1;right:22px;bottom:15px;color:#776b26;font-size:11px;font-weight:700;direction:rtl}
 @media(max-width:760px){.service-grid{grid-template-columns:1fr}.landing{padding:36px 18px}.landing-head{flex-direction:column;text-align:center}.system-backup{align-items:stretch;flex-direction:column}.system-backup-actions{display:grid;grid-template-columns:1fr}.system-backup-actions button{min-height:44px}.sticky-board-head{align-items:start}.sticky-form-row{flex-direction:column}.sticky-form button{min-height:46px}.sticky-note{min-height:170px}}
+
+/* التنبيهات وويدجت أسعار العملات */
+.home-dashboard-row{width:100%;max-width:1000px;display:grid;grid-template-columns:1fr 1.35fr;gap:16px;margin-top:22px}
+.currency-widget,.home-reminders{background:#fff;border:1px solid var(--line);border-radius:15px;box-shadow:0 4px 14px #132f3d0a;overflow:hidden}
+.currency-widget{padding:17px 19px}
+.currency-widget-head,.home-reminders-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.currency-widget h2,.home-reminders h2{margin:0;color:var(--navy);font-size:17px}
+.currency-widget p,.home-reminders p{margin:4px 0 0;color:var(--muted);font-size:11px}
+.currency-widget-head>span{padding:5px 8px;border-radius:7px;background:#edf7f6;color:var(--teal);font-size:11px;font-weight:800}
+.currency-rates{display:grid;gap:2px;margin-top:13px}
+.currency-rates>div{display:grid;grid-template-columns:42px 1fr auto;align-items:center;padding:8px 0;border-top:1px solid #edf1f2}
+.currency-code{direction:ltr;color:var(--teal);font-size:11px;font-weight:800}.currency-rates small{color:#657780}.currency-rates b{font-size:15px;direction:ltr}
+.currency-widget time{display:block;margin-top:7px;color:#93a0a6;font-size:9px}.currency-status{padding:18px 0}.currency-status.error{color:var(--red)}
+.home-reminders{padding:17px 19px}.home-reminders-head a{color:var(--teal);font-size:11px;font-weight:700;text-decoration:none}
+.home-reminders-list{display:grid;margin-top:11px}.home-reminders-list>a{display:grid;grid-template-columns:32px 1fr auto;align-items:center;gap:9px;padding:9px 0;border-top:1px solid #edf1f2;color:var(--ink);text-decoration:none}
+.home-reminders-list>a>span{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:#fff3da;color:#9b6a16;font-weight:900}.home-reminders-list>a>span.overdue{background:#fae8e8;color:var(--red)}
+.home-reminders-list b,.home-reminders-list small{display:block}.home-reminders-list b{font-size:12px}.home-reminders-list small{margin-top:3px;color:var(--muted);font-size:9px}.home-reminders-list em{font-size:10px;font-style:normal;color:#9b6a16}.home-reminders-empty{padding:20px 0!important;text-align:center}
+.reminders-stack{padding-bottom:40px}.reminders-intro{margin-bottom:16px;padding:14px 16px;border:1px solid #cfe0df;border-radius:11px;background:#f2f8f7;color:#47666a;font-size:13px}
+.reminders-list{display:grid;gap:11px}.reminder-card{display:grid;grid-template-columns:auto 1fr auto auto;gap:14px;align-items:center;padding:18px;background:#fff;border:1px solid var(--line);border-radius:13px;box-shadow:0 2px 7px #132f3d08}
+.reminder-bell{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:#fff3da;color:#9b6a16;font-size:20px}.reminder-copy h2{margin:0;font-size:15px}.reminder-copy p{margin:6px 0 0;color:var(--muted);font-size:11px}
+.reminder-kind{padding:6px 9px;border-radius:20px;font-size:10px}.reminder-kind.monthly{background:#e7f0f5;color:#326b8d}.reminder-kind.once{background:#e6f4ef;color:#26745f}
+@media(max-width:900px){.service-grid{grid-template-columns:1fr 1fr}.home-dashboard-row{grid-template-columns:1fr}}
+@media(max-width:760px){.service-grid{grid-template-columns:1fr}.home-dashboard-row{margin-top:16px}.reminder-card{grid-template-columns:auto 1fr}.reminder-kind,.reminder-card .payment-actions{grid-column:2}.reminders-stack{padding-bottom:80px}}
 
 /* الحسابات الدائنة */
 .brand small{display:block;margin-top:5px;color:#93acb8;font-size:10px}

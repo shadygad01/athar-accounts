@@ -3,6 +3,9 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  schedule:
+    # إعادة بناء لقطة أسعار العملات كل ساعتين للموقع الثابت.
+    - cron: "0 */2 * * *"
   workflow_dispatch:
 
 permissions:
