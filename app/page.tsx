@@ -22,7 +22,6 @@ const services = [
   { href: "/clients", icon: "▤", title: "حسابات خاصة" },
   { href: "/suppliers", icon: "◫", title: "حسابات الموردين" },
   { href: "/payables", icon: "◒", title: "حسابات دائنة" },
-  { href: "/reminders", icon: "◔", title: "تنبيهات" },
 ];
 
 type StickyNote = {
@@ -365,7 +364,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="sticky-board" aria-labelledby="sticky-notes-title">
+      <section className="sticky-reminders-row" aria-labelledby="sticky-notes-title">
         <div className="sticky-board-head">
           <div>
             <h2 id="sticky-notes-title">ملاحظات تذكيرية</h2>
@@ -394,6 +393,15 @@ export default function Home() {
         {notesLoaded && notes.length === 0 && (
           <p className="sticky-empty">لا توجد ملاحظات حالياً.</p>
         )}
+
+        <Link href="/reminders" className="reminders-service-card">
+          <span className="service-icon">◔</span>
+          <div>
+            <h2>تنبيهات</h2>
+            <p>إدارة مواعيد الالتزامات والتنبيهات المتكررة</p>
+          </div>
+          <strong className="arrow">←</strong>
+        </Link>
       </section>
 
       <section className="system-backup" aria-labelledby="system-backup-title">

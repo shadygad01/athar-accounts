@@ -6,6 +6,7 @@ import { money as egpMoney, today, uid } from "@/lib/calc";
 import {
   Supplier,
   SupplierCurrency,
+  SupplierStatementArchive,
   SupplierTx,
   SupplierTxType,
   buildSupplierLedger,
@@ -46,6 +47,7 @@ export default function SuppliersPage() {
   const [view, setView] = useState<View>("dashboard");
   const [modal, setModal] = useState<Modal>(null);
   const [selectedSupplierId, setSelectedSupplierId] = useState<string>("");
+  const [selectedArchiveId, setSelectedArchiveId] = useState<string>("");
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [editingTx, setEditingTx] = useState<{ supplierId: string; tx: SupplierTx } | null>(null);
 
@@ -160,6 +162,42 @@ export default function SuppliersPage() {
     if (!confirm("حذف هذا المورد وكل بياناته (التوريدات والسدادات)؟")) return;
     setSuppliers((v) => v.filter((s) => s.id !== id));
     if (selectedSupplierId === id) setSelectedSupplierId("");
+  }
+
+  function createNewStatement(supplier: Supplier) {
+    const closingBalance = buildSupplierLedger(supplier, "9999-12-31").summary.balance;
+    const balanceLabel =
+      Math.abs(closingBalance) < 0.005
+        ? "صفر"
+        : `${egpMoney(Math.abs(closingBalance))} ${closingBalance > 0 ? "دائن للمورد" : "مدين على المورد"}`;
+    if (
+      !confirm(
+        `سيتم حفظ الكشف الحالي كاملًا في الأرشيف وبدء كشف جديد برصيد افتتاحي ${balanceLabel}. هل تريد المتابعة؟`,
+      )
+    ) return;
+
+    const archive: SupplierStatementArchive = {
+      id: uid(),
+      archivedAt: new Date().toISOString(),
+      openingBalance: supplier.openingBalance,
+      openingDate: supplier.openingDate,
+      transactions: supplier.transactions.map((transaction) => ({ ...transaction })),
+      closingBalance,
+    };
+    setSuppliers((current) =>
+      current.map((item) =>
+        item.id === supplier.id
+          ? {
+              ...item,
+              openingBalance: Math.abs(closingBalance) < 0.005 ? 0 : closingBalance,
+              openingDate: today(),
+              transactions: [],
+              archives: [...(item.archives || []), archive],
+            }
+          : item,
+      ),
+    );
+    setSelectedArchiveId("");
   }
 
   function saveTx(e: React.FormEvent<HTMLFormElement>) {
@@ -402,7 +440,7 @@ export default function SuppliersPage() {
                 {suppliersSorted.map((s) => {
                   const ledger = ledgersToday.get(s.id)!;
                   return (
-                    <button className="company-card" key={s.id} onClick={() => setSelectedSupplierId(s.id)}>
+                    <button className="company-card" key={s.id} onClick={() => { setSelectedSupplierId(s.id); setSelectedArchiveId(""); }}>
                       <span className="company-dot">{s.name.slice(0, 1)}</span>
                       <div>
                         <h3>{s.name}</h3>
@@ -424,7 +462,7 @@ export default function SuppliersPage() {
             ) : selectedSupplier ? (
               <>
                 <div className="company-tools print-hide">
-                  <button className="secondary" onClick={() => setSelectedSupplierId("")}>
+                  <button className="secondary" onClick={() => { setSelectedSupplierId(""); setSelectedArchiveId(""); }}>
                     → كل الموردين
                   </button>
                   <button
@@ -447,45 +485,66 @@ export default function SuppliersPage() {
                   >
                     تقرير بتاريخ محدد
                   </button>
+                  <button className="primary" onClick={() => createNewStatement(selectedSupplier)}>
+                    ＋ إنشاء كشف جديد
+                  </button>
                   <button className="danger-link" onClick={() => deleteSupplier(selectedSupplier.id)}>
                     حذف المورد
                   </button>
                 </div>
+                {(selectedSupplier.archives?.length || 0) > 0 && (
+                  <div className="statement-archive-tabs print-hide">
+                    <button className={!selectedArchiveId ? "active" : ""} onClick={() => setSelectedArchiveId("")}>
+                      الكشف الحالي
+                    </button>
+                    {[...(selectedSupplier.archives || [])].reverse().map((archive, index) => (
+                      <button
+                        key={archive.id}
+                        className={selectedArchiveId === archive.id ? "active" : ""}
+                        onClick={() => setSelectedArchiveId(archive.id)}
+                      >
+                        كشف مؤرشف {selectedSupplier.archives!.length - index}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 <div className="contract-card">
                   <div className="contract-top">
                     <div>
                       <span className="company-dot">{selectedSupplier.name.slice(0, 1)}</span>
                       <div>
                         <h3>{supplierTitle(selectedSupplier.name)}</h3>
-                        <p>{selectedSupplier.notes || "بدون ملاحظات"}</p>
+                        <p>{selectedArchiveId ? "كشف مؤرشف — للعرض فقط" : selectedSupplier.notes || "بدون ملاحظات"}</p>
                       </div>
                     </div>
                   </div>
-                  <div className="subhead">
-                    <b>حركة الحساب بالتسلسل الزمني</b>
-                    <div className="tx-type-actions">
-                      <button
-                        type="button"
-                        className="tx-btn-supply"
-                        onClick={() => openTxModal(selectedSupplier.id, "supply")}
-                      >
-                        ＋ توريد جديد
-                      </button>
-                      <button
-                        type="button"
-                        className="tx-btn-payment"
-                        onClick={() => openTxModal(selectedSupplier.id, "payment")}
-                      >
-                        ＋ سداد جديد
-                      </button>
+                  {!selectedArchiveId && (
+                    <div className="subhead">
+                      <b>حركة الحساب بالتسلسل الزمني</b>
+                      <div className="tx-type-actions">
+                        <button
+                          type="button"
+                          className="tx-btn-supply"
+                          onClick={() => openTxModal(selectedSupplier.id, "supply")}
+                        >
+                          ＋ توريد جديد
+                        </button>
+                        <button
+                          type="button"
+                          className="tx-btn-payment"
+                          onClick={() => openTxModal(selectedSupplier.id, "payment")}
+                        >
+                          ＋ سداد جديد
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  )}
                   <SupplierStatement
-                    supplier={selectedSupplier}
-                    asOfDate={today()}
-                    editable
-                    onEdit={(tx) => openEditTxModal(selectedSupplier.id, tx)}
-                    onDelete={(txId) => deleteTx(selectedSupplier.id, txId)}
+                    supplier={statementSupplier(selectedSupplier, selectedArchiveId)}
+                    asOfDate={selectedArchiveId ? archiveStatementDate(selectedSupplier, selectedArchiveId) : today()}
+                    editable={!selectedArchiveId}
+                    onEdit={!selectedArchiveId ? (tx) => openEditTxModal(selectedSupplier.id, tx) : undefined}
+                    onDelete={!selectedArchiveId ? (txId) => deleteTx(selectedSupplier.id, txId) : undefined}
                   />
                 </div>
               </>
@@ -736,6 +795,26 @@ function Modal({ title, close, children }: { title: string; close: () => void; c
         {children}
       </div>
     </div>
+  );
+}
+
+function statementSupplier(supplier: Supplier, archiveId: string): Supplier {
+  const archive = supplier.archives?.find((item) => item.id === archiveId);
+  if (!archive) return supplier;
+  return {
+    ...supplier,
+    openingBalance: archive.openingBalance,
+    openingDate: archive.openingDate,
+    transactions: archive.transactions,
+  };
+}
+
+function archiveStatementDate(supplier: Supplier, archiveId: string) {
+  const archive = supplier.archives?.find((item) => item.id === archiveId);
+  if (!archive) return today();
+  return archive.transactions.reduce(
+    (latest, transaction) => transaction.date > latest ? transaction.date : latest,
+    archive.openingDate,
   );
 }
 

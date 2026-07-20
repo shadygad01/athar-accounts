@@ -40,6 +40,16 @@ export type Supplier = {
   openingBalance: number;
   openingDate: string;
   transactions: SupplierTx[];
+  archives?: SupplierStatementArchive[];
+};
+
+export type SupplierStatementArchive = {
+  id: string;
+  archivedAt: string;
+  openingBalance: number;
+  openingDate: string;
+  transactions: SupplierTx[];
+  closingBalance: number;
 };
 
 export type SupplierLedgerRow = {
@@ -87,7 +97,7 @@ export function buildSupplierLedger(supplier: Supplier, asOfDate: string): Suppl
   };
   const raw: Raw[] = [];
 
-  if (supplier.openingDate <= asOfDate) {
+  if (supplier.openingDate <= asOfDate && Math.abs(supplier.openingBalance) >= 0.005) {
     raw.push({
       id: "opening",
       date: supplier.openingDate,

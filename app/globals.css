@@ -120,17 +120,17 @@
 .sidebar nav .nav-link:hover{background:#ffffff10}
 
 /* الصفحة الرئيسية — اختيار الخدمة */
-.landing{min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:60px 24px;background:linear-gradient(180deg,#f5f7f8,#eef2f3)}
-.landing-head{display:flex;gap:16px;align-items:center;max-width:720px;text-align:right;margin-bottom:44px}
+.landing{--landing-frame:1160px;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:60px 24px;background:linear-gradient(180deg,#f5f7f8,#eef2f3)}
+.landing-head{display:flex;gap:16px;align-items:center;width:100%;max-width:var(--landing-frame);justify-content:center;text-align:center;margin-bottom:44px}
 .landing-head h1{margin:0;font-size:28px;color:var(--navy)}
 .landing-head p{margin:8px 0 0;color:var(--muted);font-size:14px}
-.service-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;max-width:1000px;width:100%}
+.service-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;max-width:var(--landing-frame);width:100%}
 .service-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:28px;text-decoration:none;color:var(--ink);box-shadow:0 4px 14px #132f3d0d;position:relative;transition:transform .15s,border-color .15s}
 .service-card:hover{transform:translateY(-2px);border-color:#8ebdbb}
 .service-icon{display:grid;place-items:center;width:48px;height:48px;border-radius:12px;background:#e6f2f1;color:var(--teal);font-weight:900;font-size:20px;margin-bottom:16px}
 .service-card h2{margin:0;font-size:18px}
 .service-card .arrow{position:absolute;top:28px;left:28px;color:var(--teal);font-size:20px}
-.system-backup{width:100%;max-width:900px;margin-top:22px;padding:17px 19px;display:flex;align-items:center;justify-content:space-between;gap:18px;background:#fff;border:1px solid var(--line);border-radius:15px;box-shadow:0 4px 14px #132f3d0a}
+.system-backup{width:100%;max-width:var(--landing-frame);margin-top:22px;padding:17px 19px;display:flex;align-items:center;justify-content:space-between;gap:18px;background:#fff;border:1px solid var(--line);border-radius:15px;box-shadow:0 4px 14px #132f3d0a}
 .system-backup h2{margin:0;color:var(--navy);font-size:17px}
 .system-backup p{margin:5px 0 0;color:var(--muted);font-size:12px}
 .system-backup-actions{display:flex;gap:9px;flex:none}
@@ -161,10 +161,20 @@
 .sticky-delete:hover,.sticky-delete:focus-visible{background:#fff;opacity:1}
 .sticky-note p{position:relative;z-index:1;margin:0 0 30px;white-space:pre-wrap;overflow-wrap:anywhere;font-family:"Segoe Print","Comic Sans MS",Tahoma,sans-serif;font-size:17px;font-weight:600;line-height:1.9}
 .sticky-date{position:absolute;z-index:1;right:22px;bottom:15px;color:#776b26;font-size:11px;font-weight:700;direction:rtl}
+.sticky-reminders-row{width:100%;max-width:var(--landing-frame);margin-top:38px;display:grid;grid-template-columns:minmax(0,2fr) minmax(280px,1fr);grid-template-rows:auto auto auto;align-items:start;justify-content:center;column-gap:20px}
+.sticky-reminders-row .sticky-board-head{grid-column:1;grid-row:1}
+.sticky-reminders-row .sticky-form{grid-column:1;grid-row:2}
+.sticky-reminders-row .sticky-empty{grid-column:1;grid-row:3}
+.sticky-reminders-row .reminders-service-card{grid-column:2;grid-row:2}
+.reminders-service-card{min-height:125px;margin-bottom:0;padding:20px;background:#fff;border:1px solid var(--line);border-radius:15px;box-shadow:0 4px 14px #132f3d0d;color:var(--ink);text-decoration:none;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;position:relative;transition:transform .15s,border-color .15s}
+.reminders-service-card:hover{transform:translateY(-2px);border-color:#8ebdbb}
+.reminders-service-card .service-icon{width:42px;height:42px;margin:0}
+.reminders-service-card h2{margin:0;font-size:17px}.reminders-service-card p{margin:5px 0 0;color:var(--muted);font-size:11px;line-height:1.6}
+.reminders-service-card .arrow{font-size:19px}
 @media(max-width:760px){.service-grid{grid-template-columns:1fr}.landing{padding:36px 18px}.landing-head{flex-direction:column;text-align:center}.system-backup{align-items:stretch;flex-direction:column}.system-backup-actions{display:grid;grid-template-columns:1fr}.system-backup-actions button{min-height:44px}.sticky-board-head{align-items:start}.sticky-form-row{flex-direction:column}.sticky-form button{min-height:46px}.sticky-note{min-height:170px}}
 
 /* التنبيهات وويدجت أسعار العملات */
-.home-dashboard-row{width:100%;max-width:1000px;display:grid;grid-template-columns:1fr 1.35fr;gap:16px;margin-top:22px}
+.home-dashboard-row{width:100%;max-width:var(--landing-frame);display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin-top:22px}
 .currency-widget,.home-reminders{background:#fff;border:1px solid var(--line);border-radius:15px;box-shadow:0 4px 14px #132f3d0a;overflow:hidden}
 .currency-widget{padding:17px 19px}
 .currency-widget-head,.home-reminders-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
@@ -183,6 +193,7 @@
 .reminders-list{display:grid;gap:11px}.reminder-card{display:grid;grid-template-columns:auto 1fr auto auto;gap:14px;align-items:center;padding:18px;background:#fff;border:1px solid var(--line);border-radius:13px;box-shadow:0 2px 7px #132f3d08}
 .reminder-bell{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:#fff3da;color:#9b6a16;font-size:20px}.reminder-copy h2{margin:0;font-size:15px}.reminder-copy p{margin:6px 0 0;color:var(--muted);font-size:11px}
 .reminder-kind{padding:6px 9px;border-radius:20px;font-size:10px}.reminder-kind.monthly{background:#e7f0f5;color:#326b8d}.reminder-kind.once{background:#e6f4ef;color:#26745f}
+@media(max-width:1220px){.sticky-reminders-row{max-width:900px;grid-template-columns:1fr;row-gap:14px}.sticky-reminders-row .sticky-board-head,.sticky-reminders-row .sticky-form,.sticky-reminders-row .sticky-empty,.sticky-reminders-row .reminders-service-card{grid-column:1;grid-row:auto}.sticky-reminders-row .reminders-service-card{min-height:auto}.home-dashboard-row{max-width:900px;grid-template-columns:1fr}.system-backup{max-width:900px}}
 @media(max-width:900px){.service-grid{grid-template-columns:1fr 1fr}.home-dashboard-row{grid-template-columns:1fr}}
 @media(max-width:760px){.service-grid{grid-template-columns:1fr}.home-dashboard-row{margin-top:16px}.reminder-card{grid-template-columns:auto 1fr}.reminder-kind,.reminder-card .payment-actions{grid-column:2}.reminders-stack{padding-bottom:80px}}
 
@@ -215,3 +226,8 @@
 .capturing-payable-report .payable-report-table .payable-money-col{width:17%}
 .capturing-payable-report .payable-report-table .payable-balance-col{width:20%}
 @media(max-width:760px){.payable-stats{grid-template-columns:1fr}.payable-account-head .contract-top{align-items:flex-start;gap:16px}.payable-account-head .tx-type-actions{flex-wrap:wrap}}
+
+/* أرشيف كشوف حساب المورد */
+.statement-archive-tabs{display:flex;gap:8px;align-items:center;overflow:auto;margin-bottom:14px;padding:8px;background:#eaf0f2;border:1px solid #dbe4e7;border-radius:10px}
+.statement-archive-tabs button{flex:none;border:1px solid transparent;border-radius:8px;padding:9px 13px;background:transparent;color:#60747f;cursor:pointer}
+.statement-archive-tabs button.active{background:#fff;border-color:#cbd9dd;color:var(--teal);font-weight:700;box-shadow:0 2px 5px #132f3d0a}
