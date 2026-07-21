@@ -227,6 +227,10 @@
 .capturing-payable-report .payable-report-table .payable-balance-col{width:20%}
 @media(max-width:760px){.payable-stats{grid-template-columns:1fr}.payable-account-head .contract-top{align-items:flex-start;gap:16px}.payable-account-head .tx-type-actions{flex-wrap:wrap}}
 
+/* الحسابات المختلفة وحساب السلفيات */
+.different-accounts-page{justify-content:center}.different-accounts-grid{grid-template-columns:repeat(2,minmax(0,1fr));max-width:820px}.service-description{margin:10px 0 0;color:var(--muted);font-size:12px;line-height:1.7}.different-accounts-back{margin-top:28px;color:var(--teal);text-decoration:none;font-weight:700}.receivable-due{color:var(--red)!important;font-weight:700}.receivable-due-date{display:block;margin-top:7px;color:#9b6a16;font-weight:700}
+@media(max-width:760px){.different-accounts-grid{grid-template-columns:1fr}.company-tools{flex-wrap:wrap}}
+
 /* أرشيف كشوف حساب المورد */
 .archive-modal{width:min(680px,96vw)}.archive-modal .modal-head>div p{margin:5px 0 0;color:var(--muted);font-size:11px}
 .statement-archive-browser{padding:20px}

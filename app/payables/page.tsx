@@ -172,6 +172,7 @@ export default function PayablesPage() {
           {selected && <button className="active"><span>◉</span> كشف الحساب</button>}
         </nav>
         <div className="side-actions">
+          <Link href="/different-accounts" className="side-link">→ حسابات مختلفة</Link>
           <Link href="/suppliers" className="side-link">→ حسابات الموردين</Link>
           <Link href="/" className="side-link">← كل الخدمات</Link>
           <small>البيانات محفوظة على هذا الجهاز</small>

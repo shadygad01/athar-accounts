@@ -17,11 +17,17 @@ import {
   occurrenceForReminder,
   reminderDaysAway,
 } from "@/lib/reminders";
+import {
+  RECEIVABLES_STORAGE_KEY,
+  ReceivableAccount,
+  buildReceivableLedger,
+  receivableDaysAway,
+} from "@/lib/receivables";
 
 const services = [
   { href: "/clients", icon: "▤", title: "حسابات خاصة" },
   { href: "/suppliers", icon: "◫", title: "حسابات الموردين" },
-  { href: "/payables", icon: "◒", title: "حسابات دائنة" },
+  { href: "/different-accounts", icon: "◒", title: "حسابات مختلفة" },
 ];
 
 type StickyNote = {
@@ -60,6 +66,7 @@ export default function Home() {
   const [noteText, setNoteText] = useState("");
   const [notesLoaded, setNotesLoaded] = useState(false);
   const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [receivables, setReceivables] = useState<ReceivableAccount[]>([]);
   const [exchangeRates, setExchangeRates] = useState<ExchangeRate[]>([]);
   const [ratesUpdatedAt, setRatesUpdatedAt] = useState("");
   const [ratesError, setRatesError] = useState(false);
@@ -81,6 +88,8 @@ export default function Home() {
         }
         const storedReminders = localStorage.getItem(REMINDERS_STORAGE_KEY);
         if (storedReminders) setReminders(JSON.parse(storedReminders) as Reminder[]);
+        const storedReceivables = localStorage.getItem(RECEIVABLES_STORAGE_KEY);
+        if (storedReceivables) setReceivables(JSON.parse(storedReceivables) as ReceivableAccount[]);
       } catch {
         localStorage.removeItem(NOTES_STORAGE_KEY);
       } finally {
@@ -245,6 +254,7 @@ export default function Home() {
         rates: readArray(RATES_STORAGE_KEY),
         suppliers: readArray(SUPPLIERS_STORAGE_KEY),
         payables: readArray(PAYABLES_STORAGE_KEY),
+        receivables: readArray(RECEIVABLES_STORAGE_KEY),
         reminders: readArray(REMINDERS_STORAGE_KEY),
         notes: readArray(NOTES_STORAGE_KEY),
       },
@@ -282,6 +292,7 @@ export default function Home() {
         Array.isArray(data.rates) &&
         Array.isArray(data.suppliers) &&
         (data.payables === undefined || Array.isArray(data.payables)) &&
+        (data.receivables === undefined || Array.isArray(data.receivables)) &&
         (data.reminders === undefined || Array.isArray(data.reminders)) &&
         Array.isArray(data.notes);
 
@@ -291,7 +302,7 @@ export default function Home() {
       }
       if (
         !confirm(
-          "سيتم استبدال كل بيانات النظام الحالية: الحسابات الخاصة، الموردين، الحسابات الدائنة، التنبيهات، معدلات العائد، والملاحظات. هل تريد المتابعة؟",
+          "سيتم استبدال كل بيانات النظام الحالية: الحسابات الخاصة، الموردين، الحسابات المدينة والدائنة، التنبيهات، معدلات العائد، والملاحظات. هل تريد المتابعة؟",
         )
       ) {
         return;
@@ -304,9 +315,11 @@ export default function Home() {
         JSON.stringify(data.suppliers),
       );
       localStorage.setItem(PAYABLES_STORAGE_KEY, JSON.stringify(data.payables || []));
+      localStorage.setItem(RECEIVABLES_STORAGE_KEY, JSON.stringify(data.receivables || []));
       localStorage.setItem(REMINDERS_STORAGE_KEY, JSON.stringify(data.reminders || []));
       localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(data.notes));
       setReminders((data.reminders || []) as Reminder[]);
+      setReceivables((data.receivables || []) as ReceivableAccount[]);
       setNotes(data.notes as StickyNote[]);
       alert("تمت استعادة بيانات النظام كاملة بنجاح.");
     } catch {
@@ -367,6 +380,16 @@ export default function Home() {
             <Link href="/reminders">إدارة التنبيهات</Link>
           </div>
           <div className="home-reminders-list">
+            {receivables.filter((account) => buildReceivableLedger(account).balance > 0 && receivableDaysAway(account.dueDate) <= 2).map((account) => {
+              const days = receivableDaysAway(account.dueDate);
+              return (
+                <Link href="/receivables" key={`receivable-${account.id}`}>
+                  <span className={days < 0 ? "overdue" : ""}>!</span>
+                  <div><b>موعد رد سلفة: {account.name}</b><small>{formatReminderDate(account.dueDate)}</small></div>
+                  <em>{days < 0 ? "متأخر" : days === 0 ? "اليوم" : days === 1 ? "غدًا" : "بعد يومين"}</em>
+                </Link>
+              );
+            })}
             {reminders.filter((item) => isVisibleOnHome(item)).map((item) => {
               const days = reminderDaysAway(item);
               return (
@@ -377,7 +400,7 @@ export default function Home() {
                 </Link>
               );
             })}
-            {!reminders.some((item) => isVisibleOnHome(item)) && <p className="home-reminders-empty">لا توجد التزامات قريبة.</p>}
+            {!reminders.some((item) => isVisibleOnHome(item)) && !receivables.some((account) => buildReceivableLedger(account).balance > 0 && receivableDaysAway(account.dueDate) <= 2) && <p className="home-reminders-empty">لا توجد التزامات قريبة.</p>}
           </div>
         </div>
       </section>
@@ -425,7 +448,7 @@ export default function Home() {
       <section className="system-backup" aria-labelledby="system-backup-title">
         <div>
           <h2 id="system-backup-title">بيانات النظام</h2>
-          <p>نسخة واحدة تشمل الحسابات الخاصة والموردين والحسابات الدائنة والتنبيهات والملاحظات.</p>
+          <p>نسخة واحدة تشمل الحسابات الخاصة والموردين والحسابات المدينة والدائنة والتنبيهات والملاحظات.</p>
         </div>
         <div className="system-backup-actions">
           <button type="button" onClick={backupSystem}>
