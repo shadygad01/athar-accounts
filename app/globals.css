@@ -34,7 +34,10 @@
 /* حسابات الموردين — شارات العملة وتمييز الرصيد الختامي */
 .badge.aed{background:#e6f0f6;color:#2c6488}
 .badge.sar{background:#f5eedf;color:#9c7130}
-.total-row .balance-final{background:#fbe98c;font-weight:800}
+.total-row .balance-final{font-weight:800}
+.total-row .balance-final.balance-positive{background:#fde3e3;color:#a83e43}
+.total-row .balance-final.balance-negative{background:#dff3e7;color:#236947}
+.total-row .balance-final.balance-zero{background:#eef2f3;color:var(--muted)}
 .ledger-table tbody tr.row-carry td{color:var(--muted);font-style:italic;background:#fafbfb}
 .ledger-table th.rate-col,.ledger-table td.rate-col{width:60px;font-size:11px;color:#4a5860;font-weight:500;text-align:right;padding-left:4px;padding-right:6px}
 .supplier-report-table{overflow:visible}

@@ -1127,7 +1127,17 @@ function SupplierStatement({
               <tfoot>
                 <tr className="total-row">
                   <td className="seq-col"></td>
-                  <td className="balance-final balance-col">{egpMoney(Math.round(sheetClosing))}</td>
+                  <td
+                    className={`balance-final balance-col ${
+                      sheetClosing > 0
+                        ? "balance-positive"
+                        : sheetClosing < 0
+                          ? "balance-negative"
+                          : "balance-zero"
+                    }`}
+                  >
+                    {egpMoney(Math.round(sheetClosing))}
+                  </td>
                   <td className="amount-col">{Math.round(sheetForeign)}</td>
                   <td className="rate-col"></td>
                   <td className="expense-col">{egpMoney(Math.round(sheetPaid))}</td>
