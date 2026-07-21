@@ -65,6 +65,7 @@ export default function Home() {
   const [notes, setNotes] = useState<StickyNote[]>([]);
   const [noteText, setNoteText] = useState("");
   const [notesLoaded, setNotesLoaded] = useState(false);
+  const [lastDeletedNote, setLastDeletedNote] = useState<StickyNote | null>(null);
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [receivables, setReceivables] = useState<ReceivableAccount[]>([]);
   const [exchangeRates, setExchangeRates] = useState<ExchangeRate[]>([]);
@@ -166,7 +167,26 @@ export default function Home() {
   };
 
   const deleteNote = (id: string) => {
-    setNotes((currentNotes) => currentNotes.filter((note) => note.id !== id));
+    setNotes((currentNotes) => {
+      const deletedNote = currentNotes.find((note) => note.id === id);
+      if (!deletedNote) return currentNotes;
+      setLastDeletedNote(deletedNote);
+      return currentNotes.filter((note) => note.id !== id);
+    });
+  };
+
+  const restoreLastDeletedNote = () => {
+    if (!lastDeletedNote) return;
+    setNotes((currentNotes) => {
+      if (currentNotes.some((note) => note.id === lastDeletedNote.id)) {
+        return currentNotes;
+      }
+      return [
+        ...normalizeNoteLayers(currentNotes),
+        { ...lastDeletedNote, z: 100 + currentNotes.length },
+      ];
+    });
+    setLastDeletedNote(null);
   };
 
   const bringNoteToFront = (id: string) => {
@@ -411,7 +431,14 @@ export default function Home() {
             <h2 id="sticky-notes-title">ملاحظات تذكيرية</h2>
             <p>اكتب المهام التي تريد تذكّرها واحذفها بعد الانتهاء.</p>
           </div>
-          <span className="notes-count">{notes.length} ملاحظة</span>
+          <div className="sticky-board-actions">
+            {lastDeletedNote && (
+              <button type="button" className="restore-note" onClick={restoreLastDeletedNote}>
+                ↶ استرجاع آخر ملاحظة
+              </button>
+            )}
+            <span className="notes-count">{notes.length} ملاحظة</span>
+          </div>
         </div>
 
         <form className="sticky-form" onSubmit={addNote}>
