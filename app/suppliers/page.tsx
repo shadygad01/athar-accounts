@@ -14,6 +14,7 @@ import {
   foreignMoney,
   lastRate,
   paginateLedger,
+  supplierDayTotals,
   supplierTitle,
 } from "@/lib/suppliers";
 
@@ -102,21 +103,7 @@ export default function SuppliersPage() {
   }, [ledgersToday]);
 
   const todayTotals = useMemo(() => {
-    const currentDate = today();
-    return suppliers.reduce(
-      (totalsForDay, supplier) => {
-        supplier.transactions.forEach((transaction) => {
-          if (transaction.date !== currentDate) return;
-          if (transaction.type === "supply") {
-            totalsForDay.supplied += transaction.amount * (transaction.rate || 0);
-          } else {
-            totalsForDay.paid += transaction.amount;
-          }
-        });
-        return totalsForDay;
-      },
-      { supplied: 0, paid: 0 },
-    );
+    return supplierDayTotals(suppliers, today());
   }, [suppliers]);
 
   if (!ready) return <main className="loading">جارٍ تجهيز النظام…</main>;

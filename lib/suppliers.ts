@@ -52,6 +52,29 @@ export type SupplierStatementArchive = {
   closingBalance: number;
 };
 
+/** يحسب حركة يوم بعينه من الكشف الحالي وكل الكشوف المؤرشفة. */
+export function supplierDayTotals(suppliers: Supplier[], date: string) {
+  let supplied = 0;
+  let paid = 0;
+
+  suppliers.forEach((supplier) => {
+    const transactions = [
+      ...supplier.transactions,
+      ...(supplier.archives || []).flatMap((archive) => archive.transactions),
+    ];
+    transactions.forEach((transaction) => {
+      if (transaction.date !== date) return;
+      if (transaction.type === "supply") {
+        supplied += transaction.amount * (transaction.rate || 0);
+      } else {
+        paid += transaction.amount;
+      }
+    });
+  });
+
+  return { supplied, paid };
+}
+
 export type SupplierLedgerRow = {
   id: string;
   seq: number;

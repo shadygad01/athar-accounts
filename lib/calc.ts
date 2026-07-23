@@ -48,7 +48,10 @@ export const money = (n: number) =>
   ) + " ج.م";
 
 export const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
-export const today = () => new Date().toISOString().slice(0, 10);
+export const today = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+};
 
 const parseDate = (d: string) => new Date(d + "T12:00:00");
 const toKey = (d: Date) =>
