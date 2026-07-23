@@ -33,6 +33,7 @@ const seedSuppliers: Supplier[] = [
 ];
 
 type View = "dashboard" | "suppliers" | "transactions" | "reports";
+type DashboardSupplierFilter = "active" | "all";
 type Modal = "newSupplier" | "editSupplier" | "tx" | "editTx" | null;
 
 const nav: { id: View; label: string; icon: string }[] = [
@@ -46,6 +47,7 @@ export default function SuppliersPage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [ready, setReady] = useState(false);
   const [view, setView] = useState<View>("dashboard");
+  const [dashboardSupplierFilter, setDashboardSupplierFilter] = useState<DashboardSupplierFilter>("active");
   const [modal, setModal] = useState<Modal>(null);
   const [selectedSupplierId, setSelectedSupplierId] = useState<string>("");
   const [selectedArchiveId, setSelectedArchiveId] = useState<string>("");
@@ -81,6 +83,13 @@ export default function SuppliersPage() {
   const ledgersToday = useMemo(
     () => new Map(suppliers.map((s) => [s.id, buildSupplierLedger(s, today())])),
     [suppliers],
+  );
+  const dashboardSuppliers = useMemo(
+    () =>
+      dashboardSupplierFilter === "all"
+        ? suppliersSorted
+        : suppliersSorted.filter((supplier) => Math.abs(ledgersToday.get(supplier.id)?.summary.balance || 0) > 0.01),
+    [dashboardSupplierFilter, ledgersToday, suppliersSorted],
   );
   const allTransactions = useMemo(
     () =>
@@ -371,6 +380,14 @@ export default function SuppliersPage() {
                   <h2>ملخص حسابات الموردين</h2>
                   <p>محسوب حتى تاريخ اليوم {today()}</p>
                 </div>
+                <div className="supplier-summary-filter" role="group" aria-label="تصفية ملخص حسابات الموردين">
+                  <button type="button" className={dashboardSupplierFilter === "active" ? "active" : ""} aria-pressed={dashboardSupplierFilter === "active"} onClick={() => setDashboardSupplierFilter("active")}>
+                    الحسابات النشطة
+                  </button>
+                  <button type="button" className={dashboardSupplierFilter === "all" ? "active" : ""} aria-pressed={dashboardSupplierFilter === "all"} onClick={() => setDashboardSupplierFilter("all")}>
+                    عرض الكل
+                  </button>
+                </div>
               </div>
               <div className="table-wrap">
                 <table>
@@ -385,8 +402,8 @@ export default function SuppliersPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {suppliersSorted.length ? (
-                      suppliersSorted.map((s) => {
+                    {dashboardSuppliers.length ? (
+                      dashboardSuppliers.map((s) => {
                         const ledger = ledgersToday.get(s.id)!;
                         return (
                           <tr key={s.id}>
@@ -427,7 +444,7 @@ export default function SuppliersPage() {
                     ) : (
                       <tr>
                         <td colSpan={6} className="empty">
-                          لا يوجد موردون مسجلون بعد
+                          {suppliers.length ? "لا توجد حسابات نشطة حاليًا" : "لا يوجد موردون مسجلون بعد"}
                         </td>
                       </tr>
                     )}
