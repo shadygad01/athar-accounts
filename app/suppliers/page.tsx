@@ -167,6 +167,21 @@ export default function SuppliersPage() {
     if (selectedSupplierId === id) setSelectedSupplierId("");
   }
 
+  function resetOpeningBalance(supplier: Supplier) {
+    if (Math.abs(supplier.openingBalance) < 0.005) return;
+    if (
+      !confirm(
+        `سيتم تصفير الرصيد الافتتاحي الحالي وقدره ${egpMoney(supplier.openingBalance)}، دون حذف أي توريدات أو سدادات. هل تريد المتابعة؟`,
+      )
+    ) return;
+
+    setSuppliers((current) =>
+      current.map((item) =>
+        item.id === supplier.id ? { ...item, openingBalance: 0 } : item,
+      ),
+    );
+  }
+
   function createNewStatement(supplier: Supplier) {
     const closingBalance = buildSupplierLedger(supplier, "9999-12-31").summary.balance;
     const balanceLabel =
@@ -476,6 +491,14 @@ export default function SuppliersPage() {
                     }}
                   >
                     تعديل بيانات المورد
+                  </button>
+                  <button
+                    className="secondary reset-opening-balance"
+                    disabled={Math.abs(selectedSupplier.openingBalance) < 0.005}
+                    onClick={() => resetOpeningBalance(selectedSupplier)}
+                    title={Math.abs(selectedSupplier.openingBalance) < 0.005 ? "الرصيد الافتتاحي صفر بالفعل" : undefined}
+                  >
+                    تصفير الرصيد الافتتاحي
                   </button>
                   <button
                     className="secondary"
