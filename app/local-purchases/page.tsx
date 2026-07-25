@@ -29,6 +29,7 @@ export default function LocalPurchasesPage() {
   const [editingCurrency, setEditingCurrency] = useState<LocalPurchaseCurrency | null>(null);
   const [editingEntry, setEditingEntry] = useState<LocalPurchaseEntry | null>(null);
   const [currencyId, setCurrencyId] = useState("");
+  const [entryType, setEntryType] = useState<LocalPurchaseEntry["type"]>("addition");
   const [amount, setAmount] = useState("");
   const [rate, setRate] = useState("");
   const [filterCurrency, setFilterCurrency] = useState("all");
@@ -112,17 +113,37 @@ export default function LocalPurchasesPage() {
       return;
     }
     const selectedId = entry?.currencyId || data.currencies[0].id;
-    const selectedCurrency = data.currencies.find((currency) => currency.id === selectedId);
+    const selectedType = entry?.type || "addition";
     setEditingEntry(entry || null);
+    setEntryType(selectedType);
     setCurrencyId(selectedId);
     setAmount(entry ? String(entry.amount) : "");
-    setRate(String(entry?.rate ?? selectedCurrency?.rate ?? ""));
+    setRate(String(entry?.rate ?? defaultRateFor(selectedId, selectedType)));
     setModal("entry");
   }
 
   function changeCurrency(id: string) {
     setCurrencyId(id);
-    setRate(String(data.currencies.find((currency) => currency.id === id)?.rate || ""));
+    setRate(String(defaultRateFor(id, entryType)));
+  }
+
+  function changeEntryType(type: LocalPurchaseEntry["type"]) {
+    setEntryType(type);
+    if (currencyId) setRate(String(defaultRateFor(currencyId, type)));
+  }
+
+  function defaultRateFor(id: string, type: LocalPurchaseEntry["type"]) {
+    const currencyRate = data.currencies.find((currency) => currency.id === id)?.rate || "";
+    if (type !== "withdrawal") return currencyRate;
+    const historicalEntries = [
+      ...data.archives.flatMap((archive) => archive.entries),
+      ...data.entries,
+    ];
+    const latestPurchase = historicalEntries
+      .map((entry, index) => ({ entry, index }))
+      .filter(({ entry }) => entry.currencyId === id && entry.type === "addition")
+      .sort((a, b) => b.entry.date.localeCompare(a.entry.date) || b.index - a.index)[0]?.entry;
+    return latestPurchase?.rate || currencyRate;
   }
 
   function saveEntry(event: FormEvent<HTMLFormElement>) {
@@ -133,7 +154,7 @@ export default function LocalPurchasesPage() {
     const entryRate = Number(rate);
     const date = String(form.get("date") || "");
     const description = String(form.get("description") || "").trim();
-    const type = String(form.get("type")) === "withdrawal" ? "withdrawal" : "addition";
+    const type = entryType;
     if (!currency || !date || !description || entryAmount <= 0 || entryRate <= 0) return;
     const entry: LocalPurchaseEntry = {
       id: editingEntry?.id || uid(), date, description, type,
@@ -261,7 +282,7 @@ export default function LocalPurchasesPage() {
     </main>
 
     {modal === "currency" && <Dialog title={editingCurrency ? "تعديل العملة" : "إضافة عملة"} close={() => setModal(null)}><form className="form" onSubmit={saveCurrency}><div className="form-grid"><label>اسم العملة<input name="name" required autoFocus defaultValue={editingCurrency?.name} placeholder="مثال: ريال" /></label><label>المعامل<input name="rate" type="number" min="0.0001" step="0.0001" required defaultValue={editingCurrency?.rate} placeholder="مثال: 13.08" /></label></div><button className="primary submit">حفظ العملة</button></form></Dialog>}
-    {modal === "entry" && <Dialog title={editingEntry ? "تعديل الحركة" : "إضافة حركة شراء محلي"} close={() => setModal(null)}><form className="form" onSubmit={saveEntry}><div className="form-grid"><label>التاريخ<input name="date" type="date" required defaultValue={editingEntry?.date || today()} /></label><label>نوع الحركة<select name="type" defaultValue={editingEntry?.type || "addition"}><option value="addition">إضافة عملة</option><option value="withdrawal">سحب عملة</option></select></label><label className="wide">البيان<input name="description" required autoFocus defaultValue={editingEntry?.description} placeholder="اكتب بيان الحركة" /></label><label>العملة<select value={currencyId} onChange={(event) => changeCurrency(event.target.value)} required>{data.currencies.map((currency) => <option key={currency.id} value={currency.id}>{currency.name}</option>)}</select></label><label>مبلغ العملة<input type="number" min="0.0001" step="0.0001" required value={amount} onChange={(event) => setAmount(event.target.value)} /></label><label>المعامل<input type="number" min="0.0001" step="0.0001" required value={rate} onChange={(event) => setRate(event.target.value)} /></label><div className="balance-box"><small>قيمة الإذن بالجنيه</small><b>{money(calculatedVoucher)}</b></div></div><button className="primary submit">{editingEntry ? "حفظ التعديلات" : "تسجيل الحركة"}</button></form></Dialog>}
+    {modal === "entry" && <Dialog title={editingEntry ? "تعديل الحركة" : "إضافة حركة شراء محلي"} close={() => setModal(null)}><form className="form" onSubmit={saveEntry}><div className="form-grid"><label>التاريخ<input name="date" type="date" required defaultValue={editingEntry?.date || today()} /></label><label>نوع الحركة<select name="type" value={entryType} onChange={(event) => changeEntryType(event.target.value as LocalPurchaseEntry["type"])}><option value="addition">إضافة عملة</option><option value="withdrawal">سحب عملة</option></select></label><label className="wide">البيان<input name="description" required autoFocus defaultValue={editingEntry?.description} placeholder="اكتب بيان الحركة" /></label><label>العملة<select value={currencyId} onChange={(event) => changeCurrency(event.target.value)} required>{data.currencies.map((currency) => <option key={currency.id} value={currency.id}>{currency.name}</option>)}</select></label><label>مبلغ العملة<input type="number" min="0.0001" step="0.0001" required value={amount} onChange={(event) => setAmount(event.target.value)} /></label><label>المعامل<input type="number" min="0.0001" step="0.0001" required value={rate} onChange={(event) => setRate(event.target.value)} /><small>{entryType === "withdrawal" ? "يُستخدم آخر معامل توريد لهذه العملة تلقائيًا، ويمكن تغييره." : "معامل التوريد الحالي."}</small></label><div className="balance-box"><small>قيمة الإذن بالجنيه</small><b>{money(calculatedVoucher)}</b></div></div><button className="primary submit">{editingEntry ? "حفظ التعديلات" : "تسجيل الحركة"}</button></form></Dialog>}
     {archiveOpen && <div className="overlay" onMouseDown={(event) => event.target === event.currentTarget && setArchiveOpen(false)}><div className="modal archive-modal"><div className="modal-head"><div><h2>أرشيف كشوف الشراء المحلي</h2><p>اختر الفترة ثم افتح الكشف المطلوب.</p></div><button type="button" onClick={() => setArchiveOpen(false)}>×</button></div><div className="statement-archive-browser"><div className="archive-date-filter"><label>من تاريخ<input type="date" value={archiveFrom} onChange={(event) => setArchiveFrom(event.target.value)} /></label><label>إلى تاريخ<input type="date" value={archiveTo} onChange={(event) => setArchiveTo(event.target.value)} /></label>{(archiveFrom || archiveTo) && <button className="secondary" onClick={() => { setArchiveFrom(""); setArchiveTo(""); }}>مسح الفترة</button>}</div><div className="archive-results">{data.archives.map((archive, index) => { const period = archivePeriod(archive.entries); const matches = (!archiveFrom || period.end >= archiveFrom) && (!archiveTo || period.start <= archiveTo); return matches ? <button key={archive.id} onClick={() => openArchive(archive.id)}><b>كشف {index + 1}</b><span>{period.start} ← {period.end}</span></button> : null; })}</div></div></div></div>}
   </div>;
 }
