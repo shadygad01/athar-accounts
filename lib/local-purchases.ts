@@ -21,11 +21,20 @@ export type LocalPurchaseEntry = {
 export type LocalPurchasesData = {
   currencies: LocalPurchaseCurrency[];
   entries: LocalPurchaseEntry[];
+  archives: LocalPurchaseArchive[];
+};
+
+export type LocalPurchaseArchive = {
+  id: string;
+  archivedAt: string;
+  currencies: LocalPurchaseCurrency[];
+  entries: LocalPurchaseEntry[];
 };
 
 export const emptyLocalPurchasesData = (): LocalPurchasesData => ({
   currencies: [],
   entries: [],
+  archives: [],
 });
 
 export function normalizeLocalPurchasesData(value: unknown): LocalPurchasesData {
@@ -36,5 +45,6 @@ export function normalizeLocalPurchasesData(value: unknown): LocalPurchasesData 
     entries: Array.isArray(data.entries)
       ? data.entries.map((entry) => ({ ...entry, type: entry.type === "withdrawal" ? "withdrawal" : "addition" }))
       : [],
+    archives: Array.isArray(data.archives) ? data.archives : [],
   };
 }
