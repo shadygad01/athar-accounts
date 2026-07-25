@@ -9,6 +9,7 @@ export type LocalPurchaseCurrency = {
 export type LocalPurchaseEntry = {
   id: string;
   date: string;
+  createdAt?: string;
   description: string;
   type: "addition" | "withdrawal";
   currencyId: string;
@@ -17,6 +18,17 @@ export type LocalPurchaseEntry = {
   rate: number;
   voucherValue: number;
 };
+
+export function sortLocalPurchaseEntries(entries: LocalPurchaseEntry[]) {
+  return entries
+    .map((entry, index) => ({ entry, index }))
+    .sort((a, b) =>
+      b.entry.date.localeCompare(a.entry.date) ||
+      (b.entry.createdAt || "").localeCompare(a.entry.createdAt || "") ||
+      b.index - a.index,
+    )
+    .map(({ entry }) => entry);
+}
 
 export type LocalPurchasesData = {
   currencies: LocalPurchaseCurrency[];

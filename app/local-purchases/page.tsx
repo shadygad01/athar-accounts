@@ -10,6 +10,7 @@ import {
   LocalPurchasesData,
   emptyLocalPurchasesData,
   normalizeLocalPurchasesData,
+  sortLocalPurchaseEntries,
 } from "@/lib/local-purchases";
 
 type Modal = "currency" | "entry" | null;
@@ -62,7 +63,7 @@ export default function LocalPurchasesPage() {
   const selectedArchive = data.archives.find((archive) => archive.id === selectedArchiveId) || null;
   const displayCurrencies = selectedArchive?.currencies || data.currencies;
   const displayEntries = selectedArchive?.entries || data.entries;
-  const sortedEntries = [...displayEntries].sort((a, b) => b.date.localeCompare(a.date));
+  const sortedEntries = sortLocalPurchaseEntries(displayEntries);
   const visibleEntries = (() => {
     const query = normalizeSearch(search);
     return sortedEntries.filter((entry) =>
@@ -170,7 +171,7 @@ export default function LocalPurchasesPage() {
     const type = entryType;
     if (!currency || !date || !description || entryAmount <= 0 || entryRate <= 0) return;
     const entry: LocalPurchaseEntry = {
-      id: editingEntry?.id || uid(), date, description, type,
+      id: editingEntry?.id || uid(), date, createdAt: editingEntry?.createdAt || new Date().toISOString(), description, type,
       currencyId: currency.id, currencyName: currency.name,
       amount: entryAmount, rate: entryRate, voucherValue: entryAmount * entryRate,
     };
