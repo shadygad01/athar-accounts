@@ -146,6 +146,19 @@ export default function LocalPurchasesPage() {
     return latestPurchase?.rate || currencyRate;
   }
 
+  function latestHandledRateFor(id: string) {
+    const currencyRate = data.currencies.find((currency) => currency.id === id)?.rate || 0;
+    const historicalEntries = [
+      ...data.archives.flatMap((archive) => archive.entries),
+      ...data.entries,
+    ];
+    const latestEntry = historicalEntries
+      .map((entry, index) => ({ entry, index }))
+      .filter(({ entry }) => entry.currencyId === id)
+      .sort((a, b) => b.entry.date.localeCompare(a.entry.date) || b.index - a.index)[0]?.entry;
+    return latestEntry?.rate || currencyRate;
+  }
+
   function saveEntry(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -265,9 +278,9 @@ export default function LocalPurchasesPage() {
       </section>
 
       {!selectedArchive && <section className="panel print-hide">
-        <div className="panel-head"><div><h2>العملات والمعاملات</h2><p>تعديل المعامل يطبق على الحركات الجديدة فقط</p></div></div>
+        <div className="panel-head"><div><h2>العملات والمعاملات</h2><p>المعامل الظاهر هو أحدث معامل تم التعامل به</p></div></div>
         <div className="currency-chip-list">
-          {data.currencies.map((currency) => <article key={currency.id}><div><b>{currency.name}</b><small>المعامل: {number(currency.rate)}</small></div><div><button className="text-btn" onClick={() => { setEditingCurrency(currency); setModal("currency"); }}>تعديل</button><button className="danger-link" onClick={() => deleteCurrency(currency)}>حذف</button></div></article>)}
+          {data.currencies.map((currency) => <article key={currency.id}><div><b>{currency.name}</b><small>أحدث معامل: {number(latestHandledRateFor(currency.id))}</small></div><div><button className="text-btn" onClick={() => { setEditingCurrency(currency); setModal("currency"); }}>تعديل</button><button className="danger-link" onClick={() => deleteCurrency(currency)}>حذف</button></div></article>)}
           {!data.currencies.length && <div className="empty">لم تتم إضافة عملات بعد.</div>}
         </div>
       </section>}
