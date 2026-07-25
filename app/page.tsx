@@ -23,11 +23,13 @@ import {
   buildReceivableLedger,
   receivableDaysAway,
 } from "@/lib/receivables";
+import { LOCAL_PURCHASES_STORAGE_KEY } from "@/lib/local-purchases";
 
 const services = [
   { href: "/clients", icon: "▤", title: "حسابات خاصة" },
   { href: "/suppliers", icon: "◫", title: "حسابات الموردين" },
   { href: "/different-accounts", icon: "◒", title: "حسابات مختلفة" },
+  { href: "/local-purchases", icon: "▤", title: "شراء محلي" },
 ];
 
 type StickyNote = {
@@ -274,6 +276,14 @@ export default function Home() {
         rates: readArray(RATES_STORAGE_KEY),
         suppliers: readArray(SUPPLIERS_STORAGE_KEY),
         payables: readArray(PAYABLES_STORAGE_KEY),
+        localPurchases: (() => {
+          try {
+            const value = localStorage.getItem(LOCAL_PURCHASES_STORAGE_KEY);
+            return value ? JSON.parse(value) : { currencies: [], entries: [] };
+          } catch {
+            return { currencies: [], entries: [] };
+          }
+        })(),
         receivables: readArray(RECEIVABLES_STORAGE_KEY),
         reminders: readArray(REMINDERS_STORAGE_KEY),
         notes: readArray(NOTES_STORAGE_KEY),
@@ -312,6 +322,7 @@ export default function Home() {
         Array.isArray(data.rates) &&
         Array.isArray(data.suppliers) &&
         (data.payables === undefined || Array.isArray(data.payables)) &&
+        (data.localPurchases === undefined || (typeof data.localPurchases === "object" && data.localPurchases !== null)) &&
         (data.receivables === undefined || Array.isArray(data.receivables)) &&
         (data.reminders === undefined || Array.isArray(data.reminders)) &&
         Array.isArray(data.notes);
@@ -335,6 +346,7 @@ export default function Home() {
         JSON.stringify(data.suppliers),
       );
       localStorage.setItem(PAYABLES_STORAGE_KEY, JSON.stringify(data.payables || []));
+      localStorage.setItem(LOCAL_PURCHASES_STORAGE_KEY, JSON.stringify(data.localPurchases || { currencies: [], entries: [] }));
       localStorage.setItem(RECEIVABLES_STORAGE_KEY, JSON.stringify(data.receivables || []));
       localStorage.setItem(REMINDERS_STORAGE_KEY, JSON.stringify(data.reminders || []));
       localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(data.notes));

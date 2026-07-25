@@ -123,6 +123,20 @@
 .sidebar nav .nav-link{display:flex;align-items:center;gap:13px;width:100%;border:0;background:transparent;color:#d8e4e9;border-radius:10px;padding:13px 14px;text-align:right;font:inherit;cursor:pointer;text-decoration:none}
 .sidebar nav .nav-link:hover{background:#ffffff10}
 
+/* شراء محلي */
+.local-purchase-stats{grid-template-columns:repeat(3,1fr)}
+.currency-chip-list{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:0 22px 22px}
+.currency-chip-list article{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--line);border-radius:10px;padding:14px;background:#f8fafb}
+.currency-chip-list b,.currency-chip-list small{display:block}.currency-chip-list small{color:var(--muted);margin-top:4px}.currency-chip-list article>div:last-child{display:flex;gap:5px}
+.local-purchase-filters{display:flex;gap:8px;align-items:center}.local-purchase-filters input,.local-purchase-filters select{border:1px solid var(--line);border-radius:8px;background:#fff;padding:9px}
+.local-purchase-report table{min-width:max(900px,100%);width:max-content}.local-purchase-report th,.local-purchase-report td{padding:9px 5px}.local-purchase-report tfoot td{vertical-align:top}.currency-total{display:block;white-space:nowrap;margin-bottom:4px}.balance-box b{display:block;font-size:21px;margin-top:6px}
+.excel-like-table thead tr:first-child th{background:#eaf3f2;color:var(--navy);text-align:center}.excel-like-table thead tr:nth-child(2) th{background:#f5f9f9;text-align:center}.excel-like-table .currency-group{border-right:2px solid #cadcdd}.excel-like-table td{text-align:center}.excel-like-table td:first-child{text-align:right;min-width:210px}.excel-like-table .currency-grand-total{background:#fff6a8;color:#4b4216;font-size:14px;font-weight:800}.excel-like-table tfoot tr{background:#fff36b}.excel-like-table tfoot td{font-weight:800;border-top:2px solid #d7c900}
+.excel-like-table td:first-child,.excel-like-table .purchase-description-col{width:160px;min-width:160px}.excel-like-table .purchase-date-col{width:78px;min-width:78px;white-space:nowrap}.excel-like-table .purchase-type-col{width:52px;min-width:52px}.excel-like-table .currency-amount-col{width:58px;min-width:58px;white-space:nowrap}.excel-like-table .currency-rate-col{width:38px;min-width:38px;padding-right:2px;padding-left:2px;white-space:nowrap;font-size:10px}.excel-like-table .purchase-voucher-col{width:90px;min-width:90px;white-space:nowrap}.excel-like-table .purchase-actions-col{width:70px;min-width:70px}
+.capturing-local-purchase-report{width:max-content;min-width:100%;margin:0;padding-bottom:1px;box-shadow:none}.capturing-local-purchase-report .table-wrap{overflow:visible}.capturing-local-purchase-report .excel-like-table{min-width:0}.capturing-local-purchase-report .capture-hide{display:none!important}
+@media(max-width:900px){.currency-chip-list{grid-template-columns:1fr 1fr}.local-purchase-report .panel-head{align-items:stretch;flex-direction:column}.local-purchase-filters{display:grid;grid-template-columns:1fr 1fr}.local-purchase-filters input{grid-column:1/-1}}
+@media(max-width:600px){.local-purchase-stats,.currency-chip-list{grid-template-columns:1fr}.local-purchase-filters{grid-template-columns:1fr}.local-purchase-filters input{grid-column:auto}}
+@media print{.local-purchases .main{margin:0;padding:0}.local-purchases .stats{display:grid;grid-template-columns:repeat(3,1fr)}.local-purchase-report{box-shadow:none}.local-purchase-report table{min-width:0}.local-purchase-report th,.local-purchase-report td{padding:7px 5px;font-size:10px}.local-purchase-report .panel-head{padding:0 0 15px}}
+
 /* الصفحة الرئيسية — اختيار الخدمة */
 .landing{--landing-frame:1160px;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:60px 24px;background:linear-gradient(180deg,#f5f7f8,#eef2f3)}
 .landing-head{display:flex;gap:16px;align-items:center;width:100%;max-width:var(--landing-frame);justify-content:center;text-align:center;margin-bottom:44px}

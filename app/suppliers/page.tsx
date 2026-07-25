@@ -308,6 +308,10 @@ export default function SuppliersPage() {
             <span>◒</span>
             حسابات دائنة
           </Link>
+          <Link href="/local-purchases" className="nav-link">
+            <span>▤</span>
+            شراء محلي
+          </Link>
         </nav>
         <div className="side-actions">
           <Link href="/" className="side-link">
