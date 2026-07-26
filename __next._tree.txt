@@ -1,2 +1,2 @@
 :HL["/athar-accounts/_next/static/chunks/0rreas7bqpcmf.css","style"]
-0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}},"staleTime":300,"buildId":"TodP1mFRywn_5j6ZanT9q"}
+0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}},"staleTime":300,"buildId":"oMgE6Raw6V44j2jCyUBR0"}
