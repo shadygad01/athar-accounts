@@ -67,7 +67,7 @@ export default function LocalPurchasesPage() {
   const visibleEntries = (() => {
     const query = normalizeSearch(search);
     return sortedEntries.filter((entry) =>
-      (filterCurrency === "all" || entry.currencyId === filterCurrency) &&
+      (filterCurrency === "all" || entry.currencyId === filterCurrency || Boolean(entry.openingAmounts?.[filterCurrency])) &&
       (!query || normalizeSearch([
         entry.description,
         entry.date,
@@ -78,12 +78,17 @@ export default function LocalPurchasesPage() {
       ].join(" ")).includes(query)),
     );
   })();
+  const isOpeningEntry = (entry: LocalPurchaseEntry) => Boolean(entry.openingAmounts);
   const signedValue = (entry: LocalPurchaseEntry) => entry.type === "withdrawal" ? -entry.voucherValue : entry.voucherValue;
-  const signedAmount = (entry: LocalPurchaseEntry) => entry.type === "withdrawal" ? -entry.amount : entry.amount;
+  const signedAmount = (entry: LocalPurchaseEntry, id = entry.currencyId) => {
+    if (entry.openingAmounts) return entry.openingAmounts[id] || 0;
+    if (entry.currencyId !== id) return 0;
+    return entry.type === "withdrawal" ? -entry.amount : entry.amount;
+  };
   const totalVoucher = visibleEntries.reduce((sum, entry) => sum + signedValue(entry), 0);
   const currencyTotals = displayCurrencies.map((currency) => ({
     ...currency,
-    total: visibleEntries.filter((entry) => entry.currencyId === currency.id).reduce((sum, entry) => sum + signedAmount(entry), 0),
+    total: visibleEntries.reduce((sum, entry) => sum + signedAmount(entry, currency.id), 0),
   }));
   const currencyMovementTotals = displayCurrencies.map((currency) => ({
     ...currency,
@@ -184,7 +189,7 @@ export default function LocalPurchasesPage() {
   }
 
   function deleteCurrency(currency: LocalPurchaseCurrency) {
-    if (data.entries.some((entry) => entry.currencyId === currency.id)) {
+    if (data.entries.some((entry) => entry.currencyId === currency.id || Boolean(entry.openingAmounts?.[currency.id]))) {
       alert("لا يمكن حذف عملة مرتبطة بحركات مسجلة. يمكنك تعديل اسمها أو معاملها.");
       return;
     }
@@ -202,10 +207,27 @@ export default function LocalPurchasesPage() {
       alert("الكشف الحالي فارغ ولا توجد حركات لحفظها في الأرشيف.");
       return;
     }
-    if (!confirm("سيتم حفظ الكشف الحالي كاملًا في الأرشيف وبدء كشف جديد فارغ مع الاحتفاظ بالعملات ومعاملاتها. هل تريد المتابعة؟")) return;
+    const carriedAmounts = Object.fromEntries(data.currencies.map((currency) => [
+      currency.id,
+      data.entries.reduce((sum, entry) => sum + signedAmount(entry, currency.id), 0),
+    ]).filter(([, amount]) => Math.abs(amount as number) >= 0.00005));
+    const carriedVoucherValue = data.entries.reduce((sum, entry) => sum + signedValue(entry), 0);
+    if (!confirm("سيتم حفظ الكشف الحالي كاملًا في الأرشيف وبدء كشف جديد بصف «رصيد سابق» يحمل صافي إجماليات العملات وقيمتها بالجنيه. هل تريد المتابعة؟")) return;
     setData((current) => ({
       ...current,
-      entries: [],
+      entries: Object.keys(carriedAmounts).length || Math.abs(carriedVoucherValue) >= 0.005 ? [{
+        id: uid(),
+        date: today(),
+        createdAt: new Date().toISOString(),
+        description: "رصيد سابق",
+        type: "addition",
+        currencyId: "",
+        currencyName: "",
+        amount: 0,
+        rate: 0,
+        voucherValue: carriedVoucherValue,
+        openingAmounts: carriedAmounts,
+      }] : [],
       archives: [...current.archives, {
         id: uid(),
         archivedAt: new Date().toISOString(),
@@ -289,7 +311,7 @@ export default function LocalPurchasesPage() {
       <section ref={reportRef} className="panel local-purchase-report">
         <div className="panel-head"><div><h2>{selectedArchive ? `بيان الشراء المحلي — كشف ${data.archives.findIndex((archive) => archive.id === selectedArchive.id) + 1}` : "بيان الشراء المحلي"}</h2></div><div className="local-purchase-filters capture-hide"><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="بحث في كل البيانات" /><select value={filterCurrency} onChange={(event) => setFilterCurrency(event.target.value)}><option value="all">كل العملات</option>{displayCurrencies.map((currency) => <option key={currency.id} value={currency.id}>{currency.name}</option>)}</select><button className="secondary" disabled={copying} onClick={copyReportAsImage}>{copying ? "جارٍ تجهيز الصورة…" : copied ? "✓ تم نسخ البيان" : "▣ نسخ البيان كصورة"}</button></div></div>
         <div className="table-wrap"><table className="excel-like-table"><thead><tr><th rowSpan={2} className="purchase-description-col">البيان</th><th rowSpan={2} className="purchase-date-col">التاريخ</th><th rowSpan={2} className="purchase-type-col">الحركة</th>{displayCurrencies.map((currency) => <th key={currency.id} colSpan={2} className="currency-group">{currency.name}</th>)}<th rowSpan={2} className="purchase-voucher-col">قيمة الإذن (ج.م)</th>{!selectedArchive && <th rowSpan={2} className="purchase-actions-col capture-hide">إجراءات</th>}</tr><tr>{displayCurrencies.map((currency) => <Fragment key={currency.id}><th className="currency-amount-col">المبلغ</th><th className="currency-rate-col">المعامل</th></Fragment>)}</tr></thead><tbody>
-          {visibleEntries.map((entry) => <tr key={entry.id} className={entry.type === "withdrawal" ? "row-withdrawal" : "row-deposit"}><td className="purchase-description-col"><b>{entry.description}</b></td><td className="purchase-date-col">{entry.date}</td><td className="purchase-type-col"><span className={`badge ${entry.type === "withdrawal" ? "late" : "ok"}`}>{entry.type === "withdrawal" ? "سحب" : "إضافة"}</span></td>{displayCurrencies.map((currency) => <Fragment key={currency.id}><td className="currency-amount-col">{entry.currencyId === currency.id ? <b>{number(signedAmount(entry))}</b> : ""}</td><td className="currency-rate-col">{entry.currencyId === currency.id ? number(entry.rate) : ""}</td></Fragment>)}<td className="purchase-voucher-col voucher-secondary">{money(signedValue(entry))}</td>{!selectedArchive && <td className="purchase-actions-col capture-hide"><div className="payment-actions"><button className="edit-payment" onClick={() => openEntry(entry)}>تعديل</button><button className="delete-payment" onClick={() => deleteEntry(entry)}>حذف</button></div></td>}</tr>)}
+          {visibleEntries.map((entry) => <tr key={entry.id} className={entry.type === "withdrawal" ? "row-withdrawal" : "row-deposit"}><td className="purchase-description-col"><b>{entry.description}</b></td><td className="purchase-date-col">{entry.date}</td><td className="purchase-type-col"><span className={`badge ${entry.type === "withdrawal" ? "late" : "ok"}`}>{isOpeningEntry(entry) ? "افتتاحي" : entry.type === "withdrawal" ? "سحب" : "إضافة"}</span></td>{displayCurrencies.map((currency) => <Fragment key={currency.id}><td className="currency-amount-col">{isOpeningEntry(entry) ? (entry.openingAmounts?.[currency.id] ? <b>{number(entry.openingAmounts[currency.id])}</b> : "") : entry.currencyId === currency.id ? <b>{number(signedAmount(entry))}</b> : ""}</td><td className="currency-rate-col">{!isOpeningEntry(entry) && entry.currencyId === currency.id ? number(entry.rate) : ""}</td></Fragment>)}<td className="purchase-voucher-col voucher-secondary">{money(signedValue(entry))}</td>{!selectedArchive && <td className="purchase-actions-col capture-hide">{!isOpeningEntry(entry) && <div className="payment-actions"><button className="edit-payment" onClick={() => openEntry(entry)}>تعديل</button><button className="delete-payment" onClick={() => deleteEntry(entry)}>حذف</button></div>}</td>}</tr>)}
           {!visibleEntries.length && <tr><td colSpan={4 + displayCurrencies.length * 2 + (selectedArchive ? 0 : 1)} className="empty">لا توجد حركات مطابقة.</td></tr>}
         </tbody><tfoot><tr className="total-row"><td colSpan={3}>الإجماليات</td>{currencyTotals.map((currency) => <Fragment key={currency.id}><td className="currency-amount-col currency-grand-total"><span>{number(currency.total)}</span><small>{currency.name}</small></td><td className="currency-rate-col">—</td></Fragment>)}<td className="purchase-voucher-col">{money(totalVoucher)}</td>{!selectedArchive && <td className="purchase-actions-col capture-hide" />}</tr></tfoot></table></div>
       </section>

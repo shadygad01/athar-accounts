@@ -17,6 +17,8 @@ export type LocalPurchaseEntry = {
   amount: number;
   rate: number;
   voucherValue: number;
+  /** A carried-forward statement row can hold one net amount per currency. */
+  openingAmounts?: Record<string, number>;
 };
 
 export function sortLocalPurchaseEntries(entries: LocalPurchaseEntry[]) {
