@@ -24,11 +24,13 @@ export type LocalPurchaseEntry = {
 export function sortLocalPurchaseEntries(entries: LocalPurchaseEntry[]) {
   return entries
     .map((entry, index) => ({ entry, index }))
-    .sort((a, b) =>
-      b.entry.date.localeCompare(a.entry.date) ||
-      (b.entry.createdAt || "").localeCompare(a.entry.createdAt || "") ||
-      b.index - a.index,
-    )
+    .sort((a, b) => {
+      const openingPriority = Number(Boolean(b.entry.openingAmounts)) - Number(Boolean(a.entry.openingAmounts));
+      return openingPriority ||
+        a.entry.date.localeCompare(b.entry.date) ||
+        (a.entry.createdAt || "").localeCompare(b.entry.createdAt || "") ||
+        a.index - b.index;
+    })
     .map(({ entry }) => entry);
 }
 
