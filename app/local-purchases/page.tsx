@@ -254,13 +254,22 @@ export default function LocalPurchasesPage() {
     report.classList.add("capturing-local-purchase-report");
     try {
       const { toBlob } = await import("html-to-image");
-      const width = Math.max(report.scrollWidth, report.clientWidth);
-      const height = Math.max(report.scrollHeight, report.clientHeight);
+      await document.fonts.ready;
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      const bounds = report.getBoundingClientRect();
+      const table = report.querySelector("table");
+      const width = Math.ceil((table?.getBoundingClientRect().width || bounds.width) + 2);
+      const height = Math.ceil(bounds.height);
       const blob = await toBlob(report, {
         backgroundColor: "#ffffff",
-        pixelRatio: 2,
+        pixelRatio: 3,
         width,
         height,
+        style: {
+          width: `${width}px`,
+          minWidth: `${width}px`,
+          maxWidth: `${width}px`,
+        },
         filter: (node) => !(node instanceof HTMLElement && node.classList.contains("capture-hide")),
       });
       if (!blob) throw new Error("capture");
