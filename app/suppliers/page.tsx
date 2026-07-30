@@ -707,6 +707,7 @@ export default function SuppliersPage() {
                   supplier={reportHistorySupplier}
                   asOfDate={report.asOfDate}
                   statementNumber={statementNumber(reportSupplier, "")}
+                  singlePage
                 />
               </>
             )}
@@ -921,6 +922,7 @@ function SupplierStatement({
   supplier,
   asOfDate,
   statementNumber = 1,
+  singlePage = false,
   editable = false,
   onEdit,
   onDelete,
@@ -928,12 +930,16 @@ function SupplierStatement({
   supplier: Supplier;
   asOfDate: string;
   statementNumber?: number;
+  singlePage?: boolean;
   editable?: boolean;
   onEdit?: (tx: SupplierTx) => void;
   onDelete?: (txId: string) => void;
 }) {
   const ledger = useMemo(() => buildSupplierLedger(supplier, asOfDate), [supplier, asOfDate]);
-  const sheets = useMemo(() => paginateLedger(ledger.rows), [ledger.rows]);
+  const sheets = useMemo(
+    () => singlePage ? [{ index: 1, total: 1, rows: ledger.rows }] : paginateLedger(ledger.rows),
+    [ledger.rows, singlePage],
+  );
   const [sheetIndex, setSheetIndex] = useState(sheets.length - 1);
   const prevSheetCount = useRef(sheets.length);
   const captureRef = useRef<HTMLDivElement>(null);
