@@ -15,6 +15,7 @@ import {
   lastRate,
   paginateLedger,
   supplierDayTotals,
+  supplierReportHistory,
   supplierTitle,
 } from "@/lib/suppliers";
 
@@ -286,6 +287,7 @@ export default function SuppliersPage() {
   }
 
   const reportSupplier = report ? suppliers.find((s) => s.id === report.supplierId) : null;
+  const reportHistorySupplier = reportSupplier ? supplierReportHistory(reportSupplier) : null;
   const txSupplier = suppliers.find((s) => s.id === txSupplierId) || null;
   const computedEgp = txSupplier && txType === "supply" ? (Number(txAmountInput) || 0) * (Number(txRateInput) || 0) : 0;
 
@@ -695,14 +697,14 @@ export default function SuppliersPage() {
               </div>
             </div>
 
-            {report && reportSupplier && (
+            {report && reportSupplier && reportHistorySupplier && (
               <>
                 <div className="print-title">
                   <h1>كشف حساب — حسابات الموردين</h1>
                   <p>تاريخ التقرير {report.asOfDate}</p>
                 </div>
                 <SupplierStatement
-                  supplier={reportSupplier}
+                  supplier={reportHistorySupplier}
                   asOfDate={report.asOfDate}
                   statementNumber={statementNumber(reportSupplier, "")}
                 />

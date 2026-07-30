@@ -52,6 +52,27 @@ export type SupplierStatementArchive = {
   closingBalance: number;
 };
 
+/**
+ * يعيد نسخة مخصّصة للتقارير تضم تاريخ المورد كاملًا: كل الكشوف المؤرشفة
+ * ثم حركات الكشف الحالي. نستخدم الرصيد الافتتاحي لأول كشف فقط لأن رصيد كل
+ * كشف لاحق هو رصيد مرحّل من سابقه، وإضافته مرة أخرى ستضاعف الرصيد.
+ */
+export function supplierReportHistory(supplier: Supplier): Supplier {
+  const archives = supplier.archives || [];
+  if (!archives.length) return supplier;
+
+  const firstStatement = archives[0];
+  return {
+    ...supplier,
+    openingBalance: firstStatement.openingBalance,
+    openingDate: firstStatement.openingDate,
+    transactions: [
+      ...archives.flatMap((archive) => archive.transactions),
+      ...supplier.transactions,
+    ],
+  };
+}
+
 /** يحسب حركة يوم بعينه من الكشف الحالي وكل الكشوف المؤرشفة. */
 export function supplierDayTotals(suppliers: Supplier[], date: string) {
   let supplied = 0;
