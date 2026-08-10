@@ -166,6 +166,8 @@
 .calculator-equals{padding-bottom:10px;color:var(--teal);font-weight:900}
 .calculator-rate{display:grid;gap:4px;margin-top:9px;color:#7d8e97;font-size:9px}
 .calculator-rate small{font-size:9px}.calculator-rate b{color:#425e69}
+.calculator-rate small.calculated-riyal-rate{font-size:12px;font-weight:800;color:var(--navy);line-height:1.5}
+.calculator-rate small.calculated-riyal-rate b{color:var(--teal)}
 .system-backup{width:100%;max-width:var(--landing-frame);margin-top:22px;padding:17px 19px;display:flex;align-items:center;justify-content:space-between;gap:18px;background:#fff;border:1px solid var(--line);border-radius:15px;box-shadow:0 4px 14px #132f3d0a}
 .system-backup h2{margin:0;color:var(--navy);font-size:17px}
 .system-backup p{margin:5px 0 0;color:var(--muted);font-size:12px}

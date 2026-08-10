@@ -407,7 +407,7 @@ export default function Home() {
             {dollarSellingRate && calculatedRiyalRate ? (
               <>
                 <small>سعر بيع الدولار اليوم: <b>{dollarSellingRate.toLocaleString("ar-EG-u-nu-latn", { minimumFractionDigits: 2, maximumFractionDigits: 4 })} ج.م</b></small>
-                <small>متوسط سعر الريال المحسوب من الدولار: <b>{calculatedRiyalRate.toLocaleString("ar-EG-u-nu-latn", { minimumFractionDigits: 2, maximumFractionDigits: 4 })} ج.م</b></small>
+                <small className="calculated-riyal-rate">متوسط سعر الريال المحسوب من الدولار: <b>{calculatedRiyalRate.toLocaleString("ar-EG-u-nu-latn", { minimumFractionDigits: 2, maximumFractionDigits: 4 })} ج.م</b></small>
               </>
             ) : (
               <small>{ratesError ? "تعذر تحميل سعر بيع الدولار اليوم." : "جارٍ تحميل سعر بيع الدولار اليوم…"}</small>
