@@ -1,2 +1,2 @@
-:HL["/athar-accounts/_next/static/chunks/0tppndzfmsshg.css","style"]
-0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"payables","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"B0N8hu32K4EeJSxM5A1Rf"}
+:HL["/athar-accounts/_next/static/chunks/0zy9rnjwlvzbf.css","style"]
+0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"payables","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"pNOISXds5f-t5M0NBr2hg"}
