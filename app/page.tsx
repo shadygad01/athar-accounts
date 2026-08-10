@@ -64,6 +64,7 @@ const normalizeNoteLayers = (notes: StickyNote[]) =>
     .map((note, index) => ({ ...note, z: 100 + index }));
 
 export default function Home() {
+  const [dollarAmount, setDollarAmount] = useState("");
   const [notes, setNotes] = useState<StickyNote[]>([]);
   const [noteText, setNoteText] = useState("");
   const [notesLoaded, setNotesLoaded] = useState(false);
@@ -79,6 +80,11 @@ export default function Home() {
     offsetX: number;
     offsetY: number;
   } | null>(null);
+  const dollarSellingRate = exchangeRates.find((rate) => rate.code === "USD")?.value;
+  const calculatedRiyalRate = dollarSellingRate ? dollarSellingRate / 3.72 : undefined;
+  const dollarValue = Number(dollarAmount);
+  const riyalAmount =
+    dollarAmount !== "" && Number.isFinite(dollarValue) ? dollarValue * 3.72 : 0;
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -380,12 +386,40 @@ export default function Home() {
             <strong className="arrow">←</strong>
           </Link>
         ))}
+        <section className="service-card calculator-card" aria-labelledby="calculator-title">
+          <span className="service-icon" aria-hidden="true">=</span>
+          <div className="calculator-heading">
+            <h2 id="calculator-title">حاسبة</h2>
+            <p>الدولار = 3.72 ريال</p>
+          </div>
+          <div className="calculator-fields">
+            <label>
+              <span>المبلغ بالدولار</span>
+              <div><input type="number" min="0" step="any" inputMode="decimal" value={dollarAmount} onChange={(event) => setDollarAmount(event.target.value)} placeholder="0.00" aria-label="المبلغ بالدولار" /><b>USD</b></div>
+            </label>
+            <span className="calculator-equals" aria-hidden="true">=</span>
+            <label>
+              <span>المبلغ بالريال</span>
+              <div><output aria-live="polite">{riyalAmount.toLocaleString("ar-EG-u-nu-latn", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</output><b>SAR</b></div>
+            </label>
+          </div>
+          <div className="calculator-rate">
+            {dollarSellingRate && calculatedRiyalRate ? (
+              <>
+                <small>سعر بيع الدولار اليوم: <b>{dollarSellingRate.toLocaleString("ar-EG-u-nu-latn", { minimumFractionDigits: 2, maximumFractionDigits: 4 })} ج.م</b></small>
+                <small>متوسط سعر الريال المحسوب من الدولار: <b>{calculatedRiyalRate.toLocaleString("ar-EG-u-nu-latn", { minimumFractionDigits: 2, maximumFractionDigits: 4 })} ج.م</b></small>
+              </>
+            ) : (
+              <small>{ratesError ? "تعذر تحميل سعر بيع الدولار اليوم." : "جارٍ تحميل سعر بيع الدولار اليوم…"}</small>
+            )}
+          </div>
+        </section>
       </div>
 
       <section className="home-dashboard-row">
         <div className="currency-widget" aria-live="polite">
           <div className="currency-widget-head">
-            <div><h2>أسعار العملات اليوم</h2><p>قيمة العملة مقابل الجنيه المصري</p></div>
+            <div><h2>أسعار العملات اليوم</h2><p>سعر البيع مقابل الجنيه المصري</p></div>
             <span>ج.م</span>
           </div>
           {exchangeRates.length > 0 ? (

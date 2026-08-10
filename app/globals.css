@@ -150,6 +150,22 @@
 .service-icon{display:grid;place-items:center;width:48px;height:48px;border-radius:12px;background:#e6f2f1;color:var(--teal);font-weight:900;font-size:20px;margin-bottom:16px}
 .service-card h2{margin:0;font-size:18px}
 .service-card .arrow{position:absolute;top:28px;left:28px;color:var(--teal);font-size:20px}
+.calculator-card{min-height:148px;padding:18px 20px;cursor:default}
+.calculator-card:hover{transform:none;border-color:var(--line)}
+.calculator-card>.service-icon{position:absolute;top:18px;right:20px;width:40px;height:40px;margin:0}
+.calculator-heading{padding-right:54px}
+.calculator-heading h2{font-size:18px}
+.calculator-heading p{margin:4px 0 0;color:var(--muted);font-size:11px}
+.calculator-fields{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:end;gap:8px;margin-top:15px}
+.calculator-fields label>span{display:block;margin-bottom:5px;color:#657780;font-size:10px;font-weight:700}
+.calculator-fields label>div{display:flex;align-items:center;border:1px solid #cfdadd;border-radius:9px;background:#fbfcfc;overflow:hidden}
+.calculator-fields input,.calculator-fields output{width:100%;min-width:0;height:38px;padding:8px 9px;border:0;background:transparent;color:var(--navy);font:inherit;font-size:14px;font-weight:800;direction:ltr;text-align:left;outline:none}
+.calculator-fields input:focus{box-shadow:inset 0 0 0 2px #68aaa6}
+.calculator-fields output{display:flex;align-items:center;background:#f2f8f7}
+.calculator-fields label b{padding:0 8px;color:var(--teal);font-size:9px;direction:ltr}
+.calculator-equals{padding-bottom:10px;color:var(--teal);font-weight:900}
+.calculator-rate{display:grid;gap:4px;margin-top:9px;color:#7d8e97;font-size:9px}
+.calculator-rate small{font-size:9px}.calculator-rate b{color:#425e69}
 .system-backup{width:100%;max-width:var(--landing-frame);margin-top:22px;padding:17px 19px;display:flex;align-items:center;justify-content:space-between;gap:18px;background:#fff;border:1px solid var(--line);border-radius:15px;box-shadow:0 4px 14px #132f3d0a}
 .system-backup h2{margin:0;color:var(--navy);font-size:17px}
 .system-backup p{margin:5px 0 0;color:var(--muted);font-size:12px}
@@ -194,7 +210,7 @@
 .reminders-service-card .service-icon{width:42px;height:42px;margin:0}
 .reminders-service-card h2{margin:0;font-size:17px}.reminders-service-card p{margin:5px 0 0;color:var(--muted);font-size:11px;line-height:1.6}
 .reminders-service-card .arrow{font-size:19px}
-@media(max-width:760px){.service-grid{grid-template-columns:1fr}.landing{padding:36px 18px}.landing-head{flex-direction:column;text-align:center}.system-backup{align-items:stretch;flex-direction:column}.system-backup-actions{display:grid;grid-template-columns:1fr}.system-backup-actions button{min-height:44px}.sticky-board-head{align-items:start;flex-direction:column}.sticky-board-actions{width:100%;justify-content:space-between}.sticky-form-row{flex-direction:column}.sticky-form button{min-height:46px}.sticky-note{min-height:170px}}
+@media(max-width:760px){.service-grid{grid-template-columns:1fr}.landing{padding:36px 18px}.landing-head{flex-direction:column;text-align:center}.system-backup{align-items:stretch;flex-direction:column}.system-backup-actions{display:grid;grid-template-columns:1fr}.system-backup-actions button{min-height:44px}.sticky-board-head{align-items:start;flex-direction:column}.sticky-board-actions{width:100%;justify-content:space-between}.sticky-form-row{flex-direction:column}.sticky-form button{min-height:46px}.sticky-note{min-height:170px}.calculator-fields{grid-template-columns:1fr}.calculator-equals{display:none}}
 
 /* التنبيهات وويدجت أسعار العملات */
 .home-dashboard-row{width:100%;max-width:var(--landing-frame);display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin-top:22px}
