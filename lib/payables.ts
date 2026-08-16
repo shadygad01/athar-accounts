@@ -6,7 +6,29 @@ export type PayableEntry = {
   date: string;
   amount: number;
   note?: string;
+  isOpening?: boolean;
 };
+
+export function isPayableOpeningEntry(entry: PayableEntry) {
+  return entry.isOpening === true || entry.id.startsWith("opening-");
+}
+
+/** إجماليات الحساب الأصلية عبر كل الكشوف، دون مضاعفة أرصدة الترحيل. */
+export function buildPayableAccountTotals(account: PayableAccount) {
+  const entries = [
+    ...(account.archives || []).flatMap((archive) => archive.entries),
+    ...account.entries,
+  ].filter((entry) => !isPayableOpeningEntry(entry));
+
+  return entries.reduce(
+    (totals, entry) => {
+      if (entry.type === "obligation") totals.totalObligations += entry.amount;
+      else totals.totalPayments += entry.amount;
+      return totals;
+    },
+    { totalObligations: 0, totalPayments: 0 },
+  );
+}
 
 export type PayableAccount = {
   id: string;

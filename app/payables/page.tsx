@@ -8,6 +8,7 @@ import {
   PayableEntry,
   PayableEntryType,
   PayableStatementArchive,
+  buildPayableAccountTotals,
   buildPayableLedger,
 } from "@/lib/payables";
 
@@ -58,6 +59,10 @@ export default function PayablesPage() {
       ? buildPayableLedger(selectedArchive ? { ...selected, entries: selectedArchive.entries } : selected)
       : null,
     [selected, selectedArchive],
+  );
+  const accountTotals = useMemo(
+    () => selected ? buildPayableAccountTotals(selected) : null,
+    [selected],
   );
 
   function saveAccount(event: React.FormEvent<HTMLFormElement>) {
@@ -149,6 +154,7 @@ export default function PayablesPage() {
       date: today(),
       amount: Math.abs(closingBalance),
       note: "رصيد مرحّل من الكشف السابق",
+      isOpening: true,
     }];
     setAccounts((current) => current.map((account) => account.id === selected.id ? {
       ...account,
@@ -241,6 +247,7 @@ export default function PayablesPage() {
             <div className="companies-grid">
               {sortedAccounts.map((account) => {
                 const result = buildPayableLedger(account);
+                const totals = buildPayableAccountTotals(account);
                 return (
                   <button className="company-card" key={account.id} onClick={() => setSelectedId(account.id)}>
                     <span className="company-dot">{account.name.slice(0, 1)}</span>
@@ -248,7 +255,7 @@ export default function PayablesPage() {
                     <div className="company-money">
                       <small>المبلغ المتبقي</small>
                       <b>{money(result.balance)}</b>
-                      <em>تم سداد {money(result.totalPayments)}</em>
+                      <em>تم سداد {money(totals.totalPayments)}</em>
                     </div>
                     <strong className="arrow">←</strong>
                   </button>
@@ -292,8 +299,8 @@ export default function PayablesPage() {
               </div>
 
               <div className="stats payable-stats">
-                <article><span className="stat-icon blue">＋</span><div><small>إجمالي الالتزامات</small><b>{money(ledger.totalObligations)}</b></div></article>
-                <article><span className="stat-icon green">✓</span><div><small>إجمالي المسدد</small><b>{money(ledger.totalPayments)}</b></div></article>
+                <article><span className="stat-icon blue">＋</span><div><small>إجمالي الالتزامات</small><b>{money(selectedArchive ? ledger.totalObligations : accountTotals?.totalObligations || 0)}</b></div></article>
+                <article><span className="stat-icon green">✓</span><div><small>إجمالي المسدد</small><b>{money(selectedArchive ? ledger.totalPayments : accountTotals?.totalPayments || 0)}</b></div></article>
                 <article><span className="stat-icon red">◫</span><div><small>الرصيد المتبقي</small><b>{money(ledger.balance)}</b></div></article>
               </div>
 
@@ -320,7 +327,7 @@ export default function PayablesPage() {
                           <td><b>{money(row.balanceAfter)}</b></td>
                           {!selectedArchive && <td className="print-hide capture-hide">
                             <div className="payment-actions">
-                              {!row.id.startsWith("opening-") && <><button className="edit-payment" onClick={() => { setEditingEntry(row); setEntryType(row.type); setModal("entry"); }}>تعديل</button>
+                              {!row.isOpening && !row.id.startsWith("opening-") && <><button className="edit-payment" onClick={() => { setEditingEntry(row); setEntryType(row.type); setModal("entry"); }}>تعديل</button>
                               <button className="delete-payment" onClick={() => deleteEntry(row.id)}>حذف</button></>}
                             </div>
                           </td>}
