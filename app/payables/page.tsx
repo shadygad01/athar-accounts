@@ -7,6 +7,7 @@ import {
   PayableAccount,
   PayableEntry,
   PayableEntryType,
+  PayableStatementArchive,
   buildPayableLedger,
 } from "@/lib/payables";
 
@@ -24,6 +25,10 @@ export default function PayablesPage() {
   const reportRef = useRef<HTMLDivElement>(null);
   const [copying, setCopying] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [selectedArchiveId, setSelectedArchiveId] = useState("");
+  const [archiveOpen, setArchiveOpen] = useState(false);
+  const [archiveFrom, setArchiveFrom] = useState("");
+  const [archiveTo, setArchiveTo] = useState("");
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
@@ -47,9 +52,12 @@ export default function PayablesPage() {
     [accounts],
   );
   const selected = accounts.find((account) => account.id === selectedId) || null;
+  const selectedArchive = selected?.archives?.find((archive) => archive.id === selectedArchiveId) || null;
   const ledger = useMemo(
-    () => (selected ? buildPayableLedger(selected) : null),
-    [selected],
+    () => selected
+      ? buildPayableLedger(selectedArchive ? { ...selected, entries: selectedArchive.entries } : selected)
+      : null,
+    [selected, selectedArchive],
   );
 
   function saveAccount(event: React.FormEvent<HTMLFormElement>) {
@@ -115,6 +123,39 @@ export default function PayablesPage() {
     if (!selected || !confirm(`حذف حساب «${selected.name}» وكل الالتزامات ودفعات السداد المسجلة به؟`)) return;
     setAccounts((current) => current.filter((account) => account.id !== selected.id));
     setSelectedId("");
+  }
+
+  function createNewStatement() {
+    if (!selected) return;
+    if (!selected.entries.length) {
+      alert("الكشف الحالي فارغ ولا توجد حركات لحفظها في الأرشيف.");
+      return;
+    }
+    const currentLedger = buildPayableLedger(selected);
+    const closingBalance = currentLedger.balance;
+    const balanceLabel = Math.abs(closingBalance) < 0.005 ? "صفر" : money(closingBalance);
+    if (!confirm(`سيتم حفظ الكشف الحالي كاملًا في الأرشيف وبدء كشف جديد برصيد مرحّل ${balanceLabel}. هل تريد المتابعة؟`)) return;
+
+    const archivedAt = new Date().toISOString();
+    const archive: PayableStatementArchive = {
+      id: uid(),
+      archivedAt,
+      entries: selected.entries.map((entry) => ({ ...entry })),
+      closingBalance,
+    };
+    const carriedEntries: PayableEntry[] = Math.abs(closingBalance) < 0.005 ? [] : [{
+      id: `opening-${archive.id}`,
+      type: closingBalance >= 0 ? "obligation" : "payment",
+      date: today(),
+      amount: Math.abs(closingBalance),
+      note: "رصيد مرحّل من الكشف السابق",
+    }];
+    setAccounts((current) => current.map((account) => account.id === selected.id ? {
+      ...account,
+      entries: carriedEntries,
+      archives: [...(account.archives || []), archive],
+    } : account));
+    setSelectedArchiveId("");
   }
 
   function deleteEntry(entryId: string) {
@@ -221,22 +262,32 @@ export default function PayablesPage() {
         ) : ledger ? (
           <section className="content-stack">
             <div className="company-tools print-hide">
-              <button className="secondary" onClick={() => setSelectedId("")}>→ كل أصحاب الالتزامات</button>
+              <button className="secondary" onClick={() => { setSelectedId(""); setSelectedArchiveId(""); }}>→ كل أصحاب الالتزامات</button>
+              {selectedArchive ? (
+                <button className="primary" onClick={() => setSelectedArchiveId("")}>العودة للكشف الحالي</button>
+              ) : (
+                <button className="primary" onClick={createNewStatement}>＋ إنشاء كشف جديد</button>
+              )}
+              {(selected.archives?.length || 0) > 0 && (
+                <button className="secondary" onClick={() => setArchiveOpen(true)}>أرشيف ({selected.archives?.length})</button>
+              )}
+              {!selectedArchive && <>
               <button className="secondary" onClick={() => { setEditingAccount(selected); setModal("account"); }}>تعديل الاسم والبيانات</button>
               <button className="secondary" onClick={copyReportAsImage} disabled={copying}>
                 {copying ? "جارٍ تجهيز الصورة…" : copied ? "✓ تم نسخ التقرير" : "⧉ نسخ التقرير كصورة"}
               </button>
               <button className="danger-link" onClick={deleteAccount}>حذف الحساب</button>
+              </>}
             </div>
 
             <div ref={reportRef} className="payable-report-capture">
               <div className="contract-card payable-account-head">
                 <div className="contract-top">
                   <div><span className="company-dot">{selected.name.slice(0, 1)}</span><div><h3>{selected.name}</h3><p>{selected.notes || "بدون ملاحظات"}</p></div></div>
-                  <div className="tx-type-actions print-hide capture-hide">
+                  {!selectedArchive && <div className="tx-type-actions print-hide capture-hide">
                     <button className="tx-btn-supply" onClick={() => openNewEntry("obligation")}>＋ إضافة التزام</button>
                     <button className="tx-btn-payment" onClick={() => openNewEntry("payment")}>＋ دفعة سداد</button>
-                  </div>
+                  </div>}
                 </div>
               </div>
 
@@ -247,7 +298,7 @@ export default function PayablesPage() {
               </div>
 
               <div className="panel report-table payable-report-table">
-                <div className="panel-head"><div><h2>كشف الحساب</h2><p>كل الالتزامات ودفعات السداد مرتبة زمنيًا</p></div></div>
+                <div className="panel-head"><div><h2>{selectedArchive ? `كشف حساب مؤرشف — كشف ${selected.archives!.findIndex((item) => item.id === selectedArchive.id) + 1}` : "كشف الحساب الحالي"}</h2><p>كل الالتزامات ودفعات السداد مرتبة زمنيًا في كشف كامل دون فواصل</p></div></div>
                 <div className="table-wrap">
                   <table>
                     <colgroup>
@@ -256,9 +307,9 @@ export default function PayablesPage() {
                       <col className="payable-money-col" />
                       <col className="payable-money-col" />
                       <col className="payable-balance-col" />
-                      <col className="payable-actions-col capture-hide" />
+                      {!selectedArchive && <col className="payable-actions-col capture-hide" />}
                     </colgroup>
-                    <thead><tr><th>التاريخ</th><th>البيان</th><th>التزام</th><th>سداد</th><th>الرصيد</th><th className="print-hide capture-hide">إجراءات</th></tr></thead>
+                    <thead><tr><th>التاريخ</th><th>البيان</th><th>التزام</th><th>سداد</th><th>الرصيد</th>{!selectedArchive && <th className="print-hide capture-hide">إجراءات</th>}</tr></thead>
                     <tbody>
                       {ledger.rows.map((row) => (
                         <tr key={row.id} className={row.type === "payment" ? "row-withdrawal" : "row-deposit"}>
@@ -267,15 +318,15 @@ export default function PayablesPage() {
                           <td>{row.type === "obligation" ? money(row.amount) : "—"}</td>
                           <td>{row.type === "payment" ? money(row.amount) : "—"}</td>
                           <td><b>{money(row.balanceAfter)}</b></td>
-                          <td className="print-hide capture-hide">
+                          {!selectedArchive && <td className="print-hide capture-hide">
                             <div className="payment-actions">
-                              <button className="edit-payment" onClick={() => { setEditingEntry(row); setEntryType(row.type); setModal("entry"); }}>تعديل</button>
-                              <button className="delete-payment" onClick={() => deleteEntry(row.id)}>حذف</button>
+                              {!row.id.startsWith("opening-") && <><button className="edit-payment" onClick={() => { setEditingEntry(row); setEntryType(row.type); setModal("entry"); }}>تعديل</button>
+                              <button className="delete-payment" onClick={() => deleteEntry(row.id)}>حذف</button></>}
                             </div>
-                          </td>
+                          </td>}
                         </tr>
                       ))}
-                      {!ledger.rows.length && <tr><td colSpan={6} className="empty">لا توجد حركات مسجلة في هذا الحساب بعد.</td></tr>}
+                      {!ledger.rows.length && <tr><td colSpan={selectedArchive ? 5 : 6} className="empty">لا توجد حركات مسجلة في هذا الحساب بعد.</td></tr>}
                     </tbody>
                   </table>
                 </div>
@@ -310,8 +361,36 @@ export default function PayablesPage() {
           </form>
         </Modal>
       )}
+
+      {archiveOpen && selected && (
+        <div className="overlay" onMouseDown={(event) => event.target === event.currentTarget && setArchiveOpen(false)}>
+          <div className="modal archive-modal">
+            <div className="modal-head"><div><h2>أرشيف كشوف الحساب</h2><p>اختر الفترة ثم افتح الكشف المطلوب كاملًا.</p></div><button type="button" onClick={() => setArchiveOpen(false)}>×</button></div>
+            <div className="statement-archive-browser">
+              <div className="archive-date-filter">
+                <label>من تاريخ<input type="date" value={archiveFrom} onChange={(event) => setArchiveFrom(event.target.value)} /></label>
+                <label>إلى تاريخ<input type="date" value={archiveTo} onChange={(event) => setArchiveTo(event.target.value)} /></label>
+                {(archiveFrom || archiveTo) && <button className="secondary" onClick={() => { setArchiveFrom(""); setArchiveTo(""); }}>مسح الفترة</button>}
+              </div>
+              <div className="archive-results">
+                {(selected.archives || []).map((archive, index) => {
+                  const period = payableArchivePeriod(archive);
+                  const matches = (!archiveFrom || period.end >= archiveFrom) && (!archiveTo || period.start <= archiveTo);
+                  return matches ? <button key={archive.id} className={selectedArchiveId === archive.id ? "active" : ""} onClick={() => { setSelectedArchiveId(archive.id); setArchiveOpen(false); }}><b>كشف {index + 1}</b><span>{period.start} ← {period.end}</span><small>المتبقي {money(archive.closingBalance)}</small></button> : null;
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
+}
+
+function payableArchivePeriod(archive: PayableStatementArchive) {
+  const dates = archive.entries.map((entry) => entry.date).filter(Boolean).sort();
+  const fallback = archive.archivedAt.slice(0, 10);
+  return { start: dates[0] || fallback, end: dates[dates.length - 1] || fallback };
 }
 
 function Modal({ title, close, children }: { title: string; close: () => void; children: React.ReactNode }) {

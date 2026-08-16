@@ -13,6 +13,14 @@ export type PayableAccount = {
   name: string;
   notes?: string;
   entries: PayableEntry[];
+  archives?: PayableStatementArchive[];
+};
+
+export type PayableStatementArchive = {
+  id: string;
+  archivedAt: string;
+  entries: PayableEntry[];
+  closingBalance: number;
 };
 
 export type PayableLedgerRow = PayableEntry & {
