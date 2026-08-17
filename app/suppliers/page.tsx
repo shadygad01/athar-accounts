@@ -82,7 +82,7 @@ export default function SuppliersPage() {
   const selectedSupplier = suppliers.find((s) => s.id === selectedSupplierId) || null;
 
   const ledgersToday = useMemo(
-    () => new Map(suppliers.map((s) => [s.id, buildSupplierLedger(s, today())])),
+    () => new Map(suppliers.map((s) => [s.id, buildSupplierLedger(supplierReportHistory(s), today())])),
     [suppliers],
   );
   const dashboardSuppliers = useMemo(
@@ -577,6 +577,7 @@ export default function SuppliersPage() {
                   )}
                   <SupplierStatement
                     supplier={statementSupplier(selectedSupplier, selectedArchiveId)}
+                    totalsSupplier={!selectedArchiveId ? supplierReportHistory(selectedSupplier) : undefined}
                     asOfDate={selectedArchiveId ? archiveStatementDate(selectedSupplier, selectedArchiveId) : today()}
                     statementNumber={statementNumber(selectedSupplier, selectedArchiveId)}
                     editable={!selectedArchiveId}
@@ -920,6 +921,7 @@ function statementNumber(supplier: Supplier, archiveId: string) {
  */
 function SupplierStatement({
   supplier,
+  totalsSupplier,
   asOfDate,
   statementNumber = 1,
   singlePage = false,
@@ -928,6 +930,7 @@ function SupplierStatement({
   onDelete,
 }: {
   supplier: Supplier;
+  totalsSupplier?: Supplier;
   asOfDate: string;
   statementNumber?: number;
   singlePage?: boolean;
@@ -936,6 +939,10 @@ function SupplierStatement({
   onDelete?: (txId: string) => void;
 }) {
   const ledger = useMemo(() => buildSupplierLedger(supplier, asOfDate), [supplier, asOfDate]);
+  const totalsLedger = useMemo(
+    () => buildSupplierLedger(totalsSupplier || supplier, asOfDate),
+    [totalsSupplier, supplier, asOfDate],
+  );
   const sheets = useMemo(
     () => singlePage ? [{ index: 1, total: 1, rows: ledger.rows }] : paginateLedger(ledger.rows),
     [ledger.rows, singlePage],
@@ -1040,10 +1047,10 @@ function SupplierStatement({
             الرصيد السابق <b>{egpMoney(Math.round(supplier.openingBalance))}</b>
           </span>
           <span>
-            إجمالي التوريدات <b>{foreignMoney(ledger.summary.totalSuppliedForeign, supplier.currency)}</b>
+            إجمالي التوريدات <b>{foreignMoney(totalsLedger.summary.totalSuppliedForeign, supplier.currency)}</b>
           </span>
           <span>
-            إجمالي المسدد <b>{egpMoney(Math.round(ledger.summary.totalPaid))}</b>
+            إجمالي المسدد <b>{egpMoney(Math.round(totalsLedger.summary.totalPaid))}</b>
           </span>
           <span>
             الرصيد المستحق للمورد <b>{egpMoney(Math.round(ledger.summary.balance))}</b>
