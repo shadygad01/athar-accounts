@@ -82,6 +82,10 @@ export default function SuppliersPage() {
   const selectedSupplier = suppliers.find((s) => s.id === selectedSupplierId) || null;
 
   const ledgersToday = useMemo(
+    () => new Map(suppliers.map((s) => [s.id, buildSupplierLedger(s, today())])),
+    [suppliers],
+  );
+  const lifetimeLedgersToday = useMemo(
     () => new Map(suppliers.map((s) => [s.id, buildSupplierLedger(supplierReportHistory(s), today())])),
     [suppliers],
   );
@@ -104,13 +108,14 @@ export default function SuppliersPage() {
     let supplied = 0;
     let paid = 0;
     let balance = 0;
-    ledgersToday.forEach((ledger) => {
-      supplied += ledger.summary.totalSuppliedEgp;
-      paid += ledger.summary.totalPaid;
+    ledgersToday.forEach((ledger, supplierId) => {
+      const lifetimeLedger = lifetimeLedgersToday.get(supplierId);
+      supplied += lifetimeLedger?.summary.totalSuppliedEgp || 0;
+      paid += lifetimeLedger?.summary.totalPaid || 0;
       balance += ledger.summary.balance;
     });
     return { supplied, paid, balance };
-  }, [ledgersToday]);
+  }, [ledgersToday, lifetimeLedgersToday]);
 
   const todayTotals = useMemo(() => {
     return supplierDayTotals(suppliers, today());
@@ -164,17 +169,20 @@ export default function SuppliersPage() {
     if (selectedSupplierId === id) setSelectedSupplierId("");
   }
 
-  function resetOpeningBalance(supplier: Supplier) {
-    if (Math.abs(supplier.openingBalance) < 0.005) return;
+  function settleSupplierBalance(supplier: Supplier) {
+    const closingBalance = buildSupplierLedger(supplier, "9999-12-31").summary.balance;
+    if (Math.abs(closingBalance) < 0.005) return;
     if (
       !confirm(
-        `سيتم تصفير الرصيد الافتتاحي الحالي وقدره ${egpMoney(supplier.openingBalance)}، دون حذف أي توريدات أو سدادات. هل تريد المتابعة؟`,
+        `سيتم تسوية الرصيد المستحق الحالي وقدره ${egpMoney(closingBalance)} إلى صفر، دون حذف أو تغيير أي توريدات أو سدادات. هل تريد المتابعة؟`,
       )
     ) return;
 
     setSuppliers((current) =>
       current.map((item) =>
-        item.id === supplier.id ? { ...item, openingBalance: 0 } : item,
+        item.id === supplier.id
+          ? { ...item, openingBalance: item.openingBalance - closingBalance }
+          : item,
       ),
     );
   }
@@ -411,6 +419,7 @@ export default function SuppliersPage() {
                     {dashboardSuppliers.length ? (
                       dashboardSuppliers.map((s) => {
                         const ledger = ledgersToday.get(s.id)!;
+                        const lifetimeLedger = lifetimeLedgersToday.get(s.id)!;
                         return (
                           <tr key={s.id}>
                             <td>
@@ -427,8 +436,8 @@ export default function SuppliersPage() {
                             <td>
                               <span className={`badge ${s.currency === "AED" ? "aed" : "sar"}`}>{currencySymbol(s.currency)}</span>
                             </td>
-                            <td>{egpMoney(ledger.summary.totalSuppliedEgp)}</td>
-                            <td>{egpMoney(ledger.summary.totalPaid)}</td>
+                            <td>{egpMoney(lifetimeLedger.summary.totalSuppliedEgp)}</td>
+                            <td>{egpMoney(lifetimeLedger.summary.totalPaid)}</td>
                             <td>
                               <b>{egpMoney(ledger.summary.balance)}</b>
                             </td>
@@ -504,11 +513,11 @@ export default function SuppliersPage() {
                   </button>
                   <button
                     className="secondary reset-opening-balance"
-                    disabled={Math.abs(selectedSupplier.openingBalance) < 0.005}
-                    onClick={() => resetOpeningBalance(selectedSupplier)}
-                    title={Math.abs(selectedSupplier.openingBalance) < 0.005 ? "الرصيد الافتتاحي صفر بالفعل" : undefined}
+                    disabled={Math.abs(ledgersToday.get(selectedSupplier.id)?.summary.balance || 0) < 0.005}
+                    onClick={() => settleSupplierBalance(selectedSupplier)}
+                    title={Math.abs(ledgersToday.get(selectedSupplier.id)?.summary.balance || 0) < 0.005 ? "الرصيد المستحق صفر بالفعل" : undefined}
                   >
-                    تصفير الرصيد الافتتاحي
+                    تصفير الرصيد المستحق
                   </button>
                   <button
                     className="secondary"
