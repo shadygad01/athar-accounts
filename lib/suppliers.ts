@@ -74,12 +74,11 @@ export function supplierReportHistory(supplier: Supplier): Supplier {
 }
 
 /**
- * مصدر إجماليات الكشف الحالي. إذا أُغلق آخر كشف على صفر تبدأ دورة إجماليات
- * جديدة، أما الرصيد المرحّل غير الصفري فيُبقي الإجماليات تراكمية عبر الأرشيف.
+ * مصدر إجماليات الكشف الحالي. الرصيد الافتتاحي الصفري يعني أن الكشف بدأ دورة
+ * مستقلة، أما الرصيد الافتتاحي المرحّل فيُبقي الإجماليات تراكمية عبر الأرشيف.
  */
 export function supplierCurrentTotalsSource(supplier: Supplier): Supplier {
-  const latestArchive = supplier.archives?.[supplier.archives.length - 1];
-  if (latestArchive && Math.abs(latestArchive.closingBalance) < 0.005) return supplier;
+  if (Math.abs(supplier.openingBalance) < 0.005) return supplier;
   return supplierReportHistory(supplier);
 }
 
