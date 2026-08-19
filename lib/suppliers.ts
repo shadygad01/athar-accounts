@@ -73,6 +73,16 @@ export function supplierReportHistory(supplier: Supplier): Supplier {
   };
 }
 
+/**
+ * مصدر إجماليات الكشف الحالي. إذا أُغلق آخر كشف على صفر تبدأ دورة إجماليات
+ * جديدة، أما الرصيد المرحّل غير الصفري فيُبقي الإجماليات تراكمية عبر الأرشيف.
+ */
+export function supplierCurrentTotalsSource(supplier: Supplier): Supplier {
+  const latestArchive = supplier.archives?.[supplier.archives.length - 1];
+  if (latestArchive && Math.abs(latestArchive.closingBalance) < 0.005) return supplier;
+  return supplierReportHistory(supplier);
+}
+
 /** يحسب حركة يوم بعينه من الكشف الحالي وكل الكشوف المؤرشفة. */
 export function supplierDayTotals(suppliers: Supplier[], date: string) {
   let supplied = 0;

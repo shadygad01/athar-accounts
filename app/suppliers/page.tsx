@@ -16,6 +16,7 @@ import {
   paginateLedger,
   supplierDayTotals,
   supplierReportHistory,
+  supplierCurrentTotalsSource,
   supplierTitle,
 } from "@/lib/suppliers";
 
@@ -586,7 +587,7 @@ export default function SuppliersPage() {
                   )}
                   <SupplierStatement
                     supplier={statementSupplier(selectedSupplier, selectedArchiveId)}
-                    totalsSupplier={!selectedArchiveId ? supplierReportHistory(selectedSupplier) : undefined}
+                    totalsSupplier={!selectedArchiveId ? supplierCurrentTotalsSource(selectedSupplier) : undefined}
                     asOfDate={selectedArchiveId ? archiveStatementDate(selectedSupplier, selectedArchiveId) : today()}
                     statementNumber={statementNumber(selectedSupplier, selectedArchiveId)}
                     editable={!selectedArchiveId}
