@@ -82,6 +82,57 @@ export function supplierCurrentTotalsSource(supplier: Supplier): Supplier {
   return supplierReportHistory(supplier);
 }
 
+/**
+ * إجماليات دورة الحساب المفتوحة فقط: عند وصول الرصيد إلى صفر تنتهي الدورة
+ * السابقة، وتبدأ إجماليات التوريد والسداد من أول حركة تالية. نعالج كل كشف
+ * برصيده الافتتاحي الفعلي حتى تظل التسويات اليدوية والكشوف المؤرشفة صحيحة.
+ */
+export function supplierTotalsSinceLastZero(supplier: Supplier, asOfDate: string) {
+  const statements = [
+    ...(supplier.archives || []).map((archive) => ({
+      openingBalance: archive.openingBalance,
+      openingDate: archive.openingDate,
+      transactions: archive.transactions,
+    })),
+    {
+      openingBalance: supplier.openingBalance,
+      openingDate: supplier.openingDate,
+      transactions: supplier.transactions,
+    },
+  ];
+
+  let totalSuppliedEgp = 0;
+  let totalSuppliedForeign = 0;
+  let totalPaid = 0;
+
+  statements.forEach((statement) => {
+    if (statement.openingDate > asOfDate) return;
+    if (Math.abs(statement.openingBalance) < 0.005) {
+      totalSuppliedEgp = 0;
+      totalSuppliedForeign = 0;
+      totalPaid = 0;
+    }
+
+    const ledger = buildSupplierLedger({ ...supplier, ...statement, archives: [] }, asOfDate);
+    ledger.rows.forEach((row) => {
+      if (row.kind === "supply") {
+        totalSuppliedEgp += row.egpDelta;
+        totalSuppliedForeign += row.currencyAmount || 0;
+      } else if (row.kind === "payment") {
+        totalPaid += -row.egpDelta;
+      }
+
+      if (Math.abs(row.balanceAfter) < 0.005) {
+        totalSuppliedEgp = 0;
+        totalSuppliedForeign = 0;
+        totalPaid = 0;
+      }
+    });
+  });
+
+  return { totalSuppliedEgp, totalSuppliedForeign, totalPaid };
+}
+
 /** يحسب حركة يوم بعينه من الكشف الحالي وكل الكشوف المؤرشفة. */
 export function supplierDayTotals(suppliers: Supplier[], date: string) {
   let supplied = 0;

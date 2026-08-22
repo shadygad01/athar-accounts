@@ -17,6 +17,7 @@ import {
   supplierDayTotals,
   supplierReportHistory,
   supplierCurrentTotalsSource,
+  supplierTotalsSinceLastZero,
   supplierTitle,
 } from "@/lib/suppliers";
 
@@ -86,8 +87,8 @@ export default function SuppliersPage() {
     () => new Map(suppliers.map((s) => [s.id, buildSupplierLedger(s, today())])),
     [suppliers],
   );
-  const lifetimeLedgersToday = useMemo(
-    () => new Map(suppliers.map((s) => [s.id, buildSupplierLedger(supplierReportHistory(s), today())])),
+  const dashboardCycleTotalsToday = useMemo(
+    () => new Map(suppliers.map((s) => [s.id, supplierTotalsSinceLastZero(s, today())])),
     [suppliers],
   );
   const dashboardSuppliers = useMemo(
@@ -110,13 +111,13 @@ export default function SuppliersPage() {
     let paid = 0;
     let balance = 0;
     ledgersToday.forEach((ledger, supplierId) => {
-      const lifetimeLedger = lifetimeLedgersToday.get(supplierId);
-      supplied += lifetimeLedger?.summary.totalSuppliedEgp || 0;
-      paid += lifetimeLedger?.summary.totalPaid || 0;
+      const cycleTotals = dashboardCycleTotalsToday.get(supplierId);
+      supplied += cycleTotals?.totalSuppliedEgp || 0;
+      paid += cycleTotals?.totalPaid || 0;
       balance += ledger.summary.balance;
     });
     return { supplied, paid, balance };
-  }, [ledgersToday, lifetimeLedgersToday]);
+  }, [dashboardCycleTotalsToday, ledgersToday]);
 
   const todayTotals = useMemo(() => {
     return supplierDayTotals(suppliers, today());
@@ -420,7 +421,7 @@ export default function SuppliersPage() {
                     {dashboardSuppliers.length ? (
                       dashboardSuppliers.map((s) => {
                         const ledger = ledgersToday.get(s.id)!;
-                        const lifetimeLedger = lifetimeLedgersToday.get(s.id)!;
+                        const cycleTotals = dashboardCycleTotalsToday.get(s.id)!;
                         return (
                           <tr key={s.id}>
                             <td>
@@ -437,8 +438,8 @@ export default function SuppliersPage() {
                             <td>
                               <span className={`badge ${s.currency === "AED" ? "aed" : "sar"}`}>{currencySymbol(s.currency)}</span>
                             </td>
-                            <td>{egpMoney(lifetimeLedger.summary.totalSuppliedEgp)}</td>
-                            <td>{egpMoney(lifetimeLedger.summary.totalPaid)}</td>
+                            <td>{egpMoney(cycleTotals.totalSuppliedEgp)}</td>
+                            <td>{egpMoney(cycleTotals.totalPaid)}</td>
                             <td>
                               <b>{egpMoney(ledger.summary.balance)}</b>
                             </td>
